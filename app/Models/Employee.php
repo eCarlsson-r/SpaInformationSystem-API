@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 class Employee extends Model
 {
     protected $table = 'employees';
+    public $timestamps = false;
 
     protected $fillable = [
-        'account_id',
+        'user_id',
         'complete_name',
         'nickname',
         'status',
@@ -18,7 +19,6 @@ class Employee extends Model
         'pob', 'dob',
         'certified',
         'recruiter',
-        'branch',
         'base_salary',
         'expertise',
         'gender', 'phone',
@@ -37,5 +37,25 @@ class Employee extends Model
     public function user()
     {
         return $this->hasOne(User::class, 'user_id');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function sessions()
+    {
+        return $this->hasMany(Session::class);
+    }
+
+    public function grade()
+    {
+        return $this->hasMany(Grade::class);
+    }
+
+    public function attendance()
+    {
+        return $this->hasMany(Attendance::class);
     }
 }

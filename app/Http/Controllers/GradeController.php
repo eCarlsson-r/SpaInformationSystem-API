@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Session;
+use App\Models\Grade;
 use Illuminate\Http\Request;
 
-class SessionController extends Controller
+class GradeController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index()
     {
-        return Session::whereIn('status', $request->array('status'))->get();
+        //
     }
 
     /**
@@ -26,15 +26,15 @@ class SessionController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Grade $grade)
     {
-        return Session::findOrFail($id);
+        //
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Session $session)
+    public function update(Request $request, Grade $grade)
     {
         //
     }
@@ -42,7 +42,7 @@ class SessionController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Session $session)
+    public function destroy(Grade $grade)
     {
         //
     }

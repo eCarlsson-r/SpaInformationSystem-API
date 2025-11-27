@@ -6,26 +6,24 @@ use Illuminate\Database\Eloquent\Model;
 
 class Session extends Model
 {
-    protected $table = 'session';
-    protected $primaryKey = 'session-code';
+    protected $table = 'sessions';
 
     protected $fillable = [
-        'order-time',
-        'reserved-time',
-        'session-bed',
-        'session-customer',
-        'session-payment',
-        'session-date',
-        'session-start',
-        'session-end',
-        'session-status',
-        'session-treatment',
-        'session-therapist',
-        'session-testimony'
+        'order_time',
+        'reserved_time',
+        'bed_id',
+        'customer_id',
+        'payment',
+        'date',
+        'start',
+        'end',
+        'status',
+        'treatment_id',
+        'employee_id'
     ];
 
     protected $guarded = [
-        'session-code'
+        'id'
     ];
 
     public function treatment()
@@ -38,7 +36,7 @@ class Session extends Model
         return $this->belongsTo(Customer::class);
     }
 
-    public function therapist()
+    public function employee()
     {
         return $this->belongsTo(Employee::class);
     }

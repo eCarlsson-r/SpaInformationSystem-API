@@ -7,6 +7,8 @@ use App\Http\Controllers\BankAccountController;
 use App\Http\Controllers\CashAccountController;
 use App\Http\Controllers\AgentController;
 use App\Http\Controllers\BankController;
+use App\Http\Controllers\IncomeController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\BedController;
 use App\Http\Controllers\RoomController;
@@ -26,6 +28,8 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/subscribe', [AuthController::class, 'subscribe']);
+Route::get('/dashboard', [AuthController::class, 'dashboard']);
 
 Route::apiResource('income', IncomeController::class);
 Route::apiResource('expense', ExpenseController::class);

@@ -34,4 +34,9 @@ class Treatment extends Model
     {
         return $this->belongsTo(Category::class, 'category_id');
     }
+
+    public function bonus()
+    {
+        return $this->hasMany(Bonus::class, 'treatment_id');
+    }
 }
