@@ -7,12 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class Voucher extends Model
 {
     protected $table = 'voucher';
+    protected $incrementing = false;
 
     protected $fillable = [
-        'treatment_id',
-        'customer_id',
-        'sales_id',
-        'session_id'
+        'register_date',
+        'register_time',
+        'amount',
+        'purchase_date'
     ];
 
     protected $guarded = [

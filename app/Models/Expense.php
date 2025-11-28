@@ -19,4 +19,14 @@ class Expense extends Model
     protected $guarded = [
         'id'
     ];
+
+    public function items()
+    {
+        return $this->hasMany(ExpenseItem::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(ExpensePayment::class);
+    }
 }

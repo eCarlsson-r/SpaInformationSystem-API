@@ -42,4 +42,9 @@ class Sales extends Model
     {
         return $this->belongsTo(Income::class);
     }
+
+    public function records()
+    {
+        return $this->hasMany(SalesRecord::class);
+    }
 }

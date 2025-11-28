@@ -19,4 +19,14 @@ class Income extends Model
     protected $guarded = [
         'id'
     ];
+
+    public function items()
+    {
+        return $this->hasMany(IncomeItem::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(IncomePayment::class);
+    }
 }
