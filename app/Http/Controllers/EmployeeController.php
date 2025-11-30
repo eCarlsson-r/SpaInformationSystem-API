@@ -12,7 +12,21 @@ class EmployeeController extends Controller
      */
     public function index()
     {
-        return Employee::all();
+        $query = Employee::query();
+
+        $query->when(request()->has('id'), function ($query) {
+            return $query->where('id', request('id'));
+        });
+
+        $query->when(request()->has('branch_id'), function ($query) {
+            return $query->where('branch_id', request('branch_id'));
+        });
+
+        $query->when(request()->has('active_only'), function ($query) {
+            return $query->where('status', 'fixed');
+        });
+
+        return $query->get();
     }
 
     /**

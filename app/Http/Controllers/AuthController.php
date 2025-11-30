@@ -56,7 +56,7 @@ class AuthController extends Controller
         return response()->json(['success' => true]);
     }
 
-    protected function employee_metadata(Employee $employee, $date)
+    protected function employee_metadata(Employee $employee, $date, $profit_year)
     {
         $metadata = array(
             "active_sessions" => $employee->sessions()->where('date', $date)->where('status', 'ongoing')->count(),
@@ -78,8 +78,8 @@ class AuthController extends Controller
             "uncontacted" => $employee->sessions()
                 ->join('customers', 'sessions.customer_id', '=', 'customers.id')
                 ->where('customer_id','>',5)->whereNotNull('customers.mobile')
-                ->groupBy('customer_id')
-                ->value('customers.id', 'customers.name', 'customers.gender', 'customers.mobile', 'sessions.date', 'sessions.employee_id')
+                ->groupBy('customers.id', 'customers.name', 'customers.gender', 'customers.mobile', 'sessions.date', 'sessions.employee_id')->orderByRaw('MAX(sessions.date) DESC')
+                ->select('customers.id', 'customers.name', 'customers.gender', 'customers.mobile', 'sessions.date', 'sessions.employee_id')->get()
         );
 
         $today_sessions = $employee->sessions()->where('date', $date)->where('status', 'completed')->count();
@@ -132,6 +132,35 @@ class AuthController extends Controller
 
         $metadata["current_commision"] = $current_commision;
 
+        $monthly_commision = $employee->sessions()
+            ->leftJoin('voucher', 'sessions.id', '=', 'voucher.session_id')
+            ->leftJoin('walkin', 'sessions.id', '=', 'walkin.session_id')
+            ->leftJoin('sales', 'walkin.sales_id', '=', 'sales.id')
+            ->join('grade', function($join) {
+                $join->on('sessions.employee_id', '=', 'grade.employee_id')
+                    ->whereRaw('grade.start_date <= sessions.date')
+                    ->where(function($query) {
+                        $query->whereRaw('grade.end_date >= sessions.date')
+                            ->orWhereNull('grade.end_date');
+                    });
+            })
+            ->join('bonus', function($join) {
+                $join->on('grade.grade', '=', 'bonus.grade')
+                    ->on('bonus.treatment_id', '=', 'sessions.treatment_id');
+            })
+            ->join('treatments', 'bonus.treatment_id', '=', 'treatments.id')
+            ->whereYear('sessions.date', $profit_year)
+            ->select('sessions.*', 'bonus.gross_bonus')
+            ->get()
+            ->groupBy(function($session) {
+                return date('m', strtotime($session->date));
+            })
+            ->map(function ($monthSessions) {
+                return $monthSessions->sum('gross_bonus');
+            });
+
+        $metadata["monthly_commision"] = $monthly_commision;
+
         $current_deduction = $employee->attendance()
             ->with(['shift', 'employee'])
             ->whereMonth('date', date('m', strtotime($date)))
@@ -139,6 +168,20 @@ class AuthController extends Controller
             ->get()->sum('deduction');
 
         $metadata["current_deduction"] = $current_deduction;
+
+        $monthly_attendance = $employee->attendance()
+            ->with(['shift', 'employee'])
+            ->whereYear('date', $profit_year)
+            ->get()
+            ->groupBy(function($attendance) {
+                // Group by month (e.g., "01", "02")
+                return date('m', strtotime($attendance->date));
+            })
+            ->map(function ($monthAttendances) {
+                return $monthAttendances->sum('deduction');
+            });
+
+        $metadata["monthly_attendance"] = $monthly_attendance;
 
         return $metadata;
     }
@@ -286,18 +329,18 @@ class AuthController extends Controller
                 ->value('complete_name'),
             "voucher_sold" => 0,
             "voucher_improve" => 0,
-            "monthly_income" => IncomePayment::join('income', 'income_payments.income_id', '=', 'income.id')
-                ->whereYear('income.date', $profit_year)
+            "monthly_income" => $branch->sales()
+                ->join('income', 'sales.income_id', '=', 'income.id')
+                ->join('income_payments', 'income_payments.income_id', '=', 'income.id')
                 ->selectRaw('MONTH(income.date) as month, SUM(income_payments.amount) as amount')
-                ->join('sales', 'income.id', '=', 'sales.income_id')
-                ->where('sales.branch_id', $branch)
+                ->whereYear('income.date', $profit_year)
                 ->groupBy('month')->get(),
             "uncontacted" => $branch->employee()
                 ->join('sessions', 'employees.id', '=', 'sessions.employee_id')
                 ->join('customers', 'sessions.customer_id', '=', 'customers.id')
                 ->where('customer_id','>',5)->whereNotNull('customers.mobile')
                 ->groupBy('customer_id')
-                ->value('customers.id', 'customers.name, customers.gender, customers.mobile, sessions.date, sessions.employee_id')
+                ->value('customers.id', 'customers.name', 'customers.gender', 'customers.mobile', 'sessions.date', 'sessions.employee_id')
         );
 
         $today_sessions = $branch->employee()->join('sessions', 'employees.id', '=', 'sessions.employee_id')->where('date', $date)->where('sessions.status', 'completed')->count();
@@ -395,7 +438,7 @@ class AuthController extends Controller
         
         $date = '2021-03-08';//date('Y-m-d');
         if (isset($employee)) {
-            return $this->employee_metadata(Employee::find($employee), $date);
+            return $this->employee_metadata(Employee::find($employee), $date, $profit_year);
         } else if (isset($branch)) {
             return $this->branch_metadata(Branch::find($branch), $date, $profit_year);
         } else {
