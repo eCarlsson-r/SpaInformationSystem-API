@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Bed extends Model
 {
+    use HasFactory;
     protected $table = 'beds';
     public $incrementing = false;
     public $timestamps = false;
@@ -13,6 +15,7 @@ class Bed extends Model
     protected $fillable = [
         'name',
         'description',
+        'room_id'
     ];
 
     protected $guarded = [

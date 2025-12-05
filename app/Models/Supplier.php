@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Supplier extends Model
 {
+    use HasFactory;
     protected $table = 'suppliers';
     public $timestamps = false;
 
@@ -14,7 +16,6 @@ class Supplier extends Model
         'contact',
         'bank',
         'bank_account',
-        'room',
         'address',
         'mobile',
         'email'

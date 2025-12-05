@@ -2,18 +2,22 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Room extends Model
 {
+    use HasFactory;
     protected $table = 'rooms';
     public $incrementing = false;
     public $timestamps = false;
 
     protected $fillable = [
+        'id',
         'name',
         'description',
-        'image'
+        'image',
+        'branch_id'
     ];
 
     protected $guarded = [
