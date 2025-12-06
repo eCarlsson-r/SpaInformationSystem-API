@@ -13,7 +13,7 @@ class CompensationController extends Controller
      */
     public function index(Request $request)
     {
-        return Compensation::where('period_id', $request->input('period_id'))->get();
+        return Compensation::with('employee')->where('period_id', $request->input('period_id'))->get();
     }
 
     /**
@@ -43,9 +43,9 @@ class CompensationController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Request $request)
+    public function destroy($id)
     {
-        if (Compensation::where('period_id', $request->input('period_id'))->delete()) {
+        if (Compensation::where('period_id', $id)->delete()) {
             return response()->json(['message' => 'Compensation deleted successfully'], 200);
         } else {
             return response()->json(['message' => 'Failed to delete compensation'], 500);

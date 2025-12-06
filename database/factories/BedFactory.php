@@ -17,12 +17,11 @@ class BedFactory extends Factory
      */
     public function definition(): array
     {
-        $roomId = Room::factory()->create()->id;
         return [
-            'id' => $this->faker->numerify(explode("-", $roomId)[1].'##'),
+            'id' => $this->faker->regexify('[A-Z0-9]{30}'),
             'name' => $this->faker->word(),
             'description' => $this->faker->sentence(),
-            'room_id' => $roomId,
+            'room_id' => Room::factory(),
         ];
     }
 }

@@ -17,13 +17,12 @@ class RoomFactory extends Factory
      */
     public function definition(): array
     {
-        $branchId = Branch::factory()->create()->id;
         return [
-            'id' => $this->faker->lexify($branchId.'-?????'),
+            'id' => $this->faker->regexify('[A-Z0-9]{11}'),
             'name' => $this->faker->word(),
             'description' => $this->faker->sentence(),
             'image' => $this->faker->imageUrl(),
-            'branch_id' => $branchId,
+            'branch_id' => Branch::factory(),
         ];
     }
 }

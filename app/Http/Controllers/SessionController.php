@@ -12,7 +12,7 @@ class SessionController extends Controller
      */
     public function index(Request $request)
     {
-        return Session::whereIn('sessions.status', json_decode($request->input('status')))
+        $sessions = Session::whereIn('sessions.status', json_decode($request->input('status')))
             ->join('treatments', 'sessions.treatment_id', '=', 'treatments.id')
             ->join('customers', 'sessions.customer_id', '=', 'customers.id')
             ->join('employees', 'sessions.employee_id', '=', 'employees.id')
@@ -26,12 +26,20 @@ class SessionController extends Controller
                 'customers.name AS customer_name', 
                 'treatments.name AS treatment_name', 
                 'treatments.duration AS treatment_duration', 
-                'employees.nickname AS therapist_name', 
+                'employees.name AS therapist_name', 
                 'beds.name AS bed_name',
                 'walkin.id AS walkin_id',
                 'voucher.id AS voucher_id',
-                'incomes.reference AS reference'
-            )->get();
+                'incomes.journal_reference AS reference'
+            );
+        
+        if ($request->input('branch_id')) {
+            return $sessions->where('branch_id', $request->input('branch_id'))->get();
+        } else if ($request->input('employee_id')) {
+            return $sessions->where('employee_id', $request->input('employee_id'))->get();
+        } else {
+            return $sessions->get();
+        }
     }
 
     /**

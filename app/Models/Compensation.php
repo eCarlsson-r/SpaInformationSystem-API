@@ -29,6 +29,6 @@ class Compensation extends Model
 
     public function period()
     {
-        return $this->belongsTo(CompensationPeriod::class);
+        return $this->belongsTo(Period::class);
     }
 }

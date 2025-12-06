@@ -10,6 +10,7 @@ class Bed extends Model
     use HasFactory;
     protected $table = 'beds';
     public $incrementing = false;
+    protected $keyType = 'string';
     public $timestamps = false;
 
     protected $fillable = [
@@ -25,5 +26,10 @@ class Bed extends Model
     public function room()
     {
         return $this->belongsTo(Room::class);
+    }
+
+    public function sessions()
+    {
+        return $this->hasMany(Session::class);
     }
 }

@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class CompensationPeriod extends Model
+class Period extends Model
 {
     protected $table = 'periods';
     public $timestamps = false;

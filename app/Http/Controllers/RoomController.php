@@ -12,7 +12,20 @@ class RoomController extends Controller
      */
     public function index()
     {
-        return Room::with('branch', 'bed')->get();
+        $rooms = Room::with(['branch', 'bed.sessions' => function ($query) {
+            $query->where('status', 'ongoing');
+        }])->get();
+
+        return $rooms->map(function ($room) {
+            $occupied_beds = $room->bed->filter(function ($bed) {
+                return $bed->sessions->isNotEmpty();
+            })->count();
+
+            $room->occupied = $occupied_beds;
+            $room->empty = $room->bed->count() - $occupied_beds;
+
+            return $room;
+        });
     }
 
     /**

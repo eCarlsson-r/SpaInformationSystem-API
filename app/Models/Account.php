@@ -10,6 +10,7 @@ class Account extends Model
     use HasFactory;
     protected $table = 'accounts';
     public $incrementing = false;
+    protected $keyType = 'string';
     public $timestamps = false;
 
     protected $fillable = [
