@@ -20,7 +20,13 @@ class AccountController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $account = Account::create($request->all());
+        
+        if ($account) {
+            return response()->json($account, 201);
+        } else {
+            return response()->json(['message' => 'Failed to create account'], 500);
+        }
     }
 
     /**
@@ -36,7 +42,11 @@ class AccountController extends Controller
      */
     public function update(Request $request, Account $account)
     {
-        //
+        if ($account->update($request->all())) {
+            return response()->json($account, 200);
+        } else {
+            return response()->json(['message' => 'Failed to update account'], 500);
+        }
     }
 
     /**

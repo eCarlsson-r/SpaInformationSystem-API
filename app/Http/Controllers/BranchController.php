@@ -20,7 +20,13 @@ class BranchController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $branch = Branch::create($request->all());
+        
+        if ($branch) {
+            return response()->json($branch, 201);
+        } else {
+            return response()->json(['message' => 'Failed to create branch'], 500);
+        }
     }
 
     /**
@@ -36,7 +42,11 @@ class BranchController extends Controller
      */
     public function update(Request $request, Branch $branch)
     {
-        //
+        if ($branch->update($request->all())) {
+            return response()->json($branch, 200);
+        } else {
+            return response()->json(['message' => 'Failed to update branch'], 500);
+        }
     }
 
     /**

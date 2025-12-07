@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('walkin', function (Blueprint $table) {
             $table->integer('id', true);
             $table->string('treatment_id', 10);
-            $table->integer('customer_id')->default(0);
-            $table->integer('sales_id')->default(0);
-            $table->integer('session_id')->default(0)->index('walkin-session');
+            $table->foreignId('customer_id')->constrained('customers')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('sales_id')->constrained('sales')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('session_id')->constrained('sessions')->cascadeOnUpdate()->cascadeOnDelete();
         });
     }
 

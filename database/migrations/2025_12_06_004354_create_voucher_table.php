@@ -16,11 +16,11 @@ return new class extends Migration
             $table->string('treatment_id', 10);
             $table->date('register_date');
             $table->time('register_time');
-            $table->integer('customer_id');
+            $table->foreignId('customer_id')->constrained('customers')->cascadeOnUpdate()->cascadeOnDelete();
             $table->integer('amount');
             $table->date('purchase_date');
-            $table->integer('sales_id');
-            $table->integer('session_id')->index('voucher-session');
+            $table->foreignId('sales_id')->constrained('sales')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('session_id')->constrained('sessions')->cascadeOnUpdate()->cascadeOnDelete();
         });
     }
 

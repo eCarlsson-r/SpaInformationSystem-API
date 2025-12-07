@@ -9,8 +9,6 @@ class Bed extends Model
 {
     use HasFactory;
     protected $table = 'beds';
-    public $incrementing = false;
-    protected $keyType = 'string';
     public $timestamps = false;
 
     protected $fillable = [

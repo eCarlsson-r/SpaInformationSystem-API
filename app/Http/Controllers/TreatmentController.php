@@ -44,9 +44,20 @@ class TreatmentController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Treatment $treatment)
+    public function update(Request $request, $id)
     {
-        //
+        $treatment = Treatment::updateOrCreate(
+            ['id' => $id],
+            $request->all()
+        );
+
+        if ($treatment->wasRecentlyCreated) {
+            return response()->json($treatment, 201);
+        } else if ($treatment->wasChanged()) {
+            return response()->json($treatment, 200);
+        } else {
+            return response()->json(['message' => 'Failed to update treatment'], 500);
+        }
     }
 
     /**

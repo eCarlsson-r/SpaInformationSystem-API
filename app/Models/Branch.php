@@ -9,8 +9,6 @@ class Branch extends Model
 {
     use HasFactory;
     protected $table = 'branches';
-    public $incrementing = false;
-    protected $keyType = 'string';
     public $timestamps = false;
 
     protected $fillable = [
@@ -23,8 +21,13 @@ class Branch extends Model
         'cash_account',
         'walkin_account',
         'voucher_purchase_account',
-        'voucher_usage_account',
-        'image'
+        'voucher_usage_account'
+    ];
+
+    protected $attributes = [
+        'city' => 'Medan',
+        'country' => 'Indonesia',
+        'description' => ''
     ];
 
     protected $guarded = [

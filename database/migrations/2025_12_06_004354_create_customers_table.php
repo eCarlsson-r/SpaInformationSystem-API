@@ -22,7 +22,7 @@ return new class extends Migration
             $table->date('date_of_birth')->nullable();
             $table->string('mobile', 50);
             $table->string('email', 100);
-            $table->integer('liability_account');
+            $table->foreignId('liability_account')->constrained('accounts')->cascadeOnUpdate()->cascadeOnDelete();
         });
     }
 

@@ -19,7 +19,7 @@ return new class extends Migration
             $table->integer('amount');
             $table->integer('quantity');
             $table->date('expiry_date');
-            $table->string('account_id', 11);
+            $table->foreignId('account_id')->constrained('accounts')->cascadeOnUpdate()->cascadeOnDelete();
         });
     }
 

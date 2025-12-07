@@ -9,12 +9,9 @@ class Room extends Model
 {
     use HasFactory;
     protected $table = 'rooms';
-    public $incrementing = false;
-    protected $keyType = 'string';
     public $timestamps = false;
 
     protected $fillable = [
-        'id',
         'name',
         'description',
         'image',

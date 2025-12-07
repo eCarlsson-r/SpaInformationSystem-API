@@ -12,11 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('beds', function (Blueprint $table) {
-            $table->string('id', 30)->primary();
+            $table->id();
             $table->string('name', 100);
             $table->string('description', 500);
-            $table->string('room_id', 11);
-            $table->foreign('room_id')->references('id')->on('rooms')->onUpdate('cascade')->onDelete('cascade');
+            $table->foreignId('room_id')->constrained('rooms')->cascadeOnUpdate()->cascadeOnDelete();
         });
     }
 

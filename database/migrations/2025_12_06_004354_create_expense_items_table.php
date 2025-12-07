@@ -13,12 +13,10 @@ return new class extends Migration
     {
         Schema::create('expense_items', function (Blueprint $table) {
             $table->integer('id', true);
-            $table->integer('expense_id')->index('link expense');
-            $table->string('account_id', 11)->default('');
+            $table->foreignId('expense_id')->constrained('expense')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('account_id')->constrained('accounts')->cascadeOnUpdate()->cascadeOnDelete();
             $table->integer('amount');
             $table->string('description', 50);
-
-            $table->foreign(['expense_id'], 'expense_items_ibfk_1')->references(['id'])->on('expenses')->onUpdate('cascade')->onDelete('cascade');
         });
     }
 

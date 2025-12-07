@@ -8,9 +8,11 @@ class Treatment extends Model
 {
     protected $table = 'treatments';
     public $incrementing = false;
+    protected $keyType = 'string';
     public $timestamps = false;
 
     protected $fillable = [
+        'id',
         'name',
         'description',
         'price',
@@ -20,10 +22,8 @@ class Treatment extends Model
         'applicable_days',
         'applicable_time_start',
         'applicable_time_end',
-        'voucher',
-        'image',
-        'video',
-        'thumbnail',
+        'voucher_normal_quantity',
+        'voucher_purchase_quantity',
         'minimum_quantity'
     ];
 
