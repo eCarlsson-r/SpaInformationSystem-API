@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
+use App\Models\Bed;
 use Illuminate\Http\Request;
 
 class RoomController extends Controller
@@ -33,7 +34,25 @@ class RoomController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'branch_id' => 'required|exists:branches,id',
+            'beds' => 'required|array',
+            'beds.*.name' => 'required|string|max:255'
+        ]);
+
+        $room = Room::create([
+            'name' => $request->name,
+            'branch_id' => $request->branch_id,
+            'description' => $request->description,
+        ]);
+
+        $room->bed()->createMany($request->beds);
+
+        return response()->json([
+            'message' => 'Room created successfully',
+            'room' => $room,
+        ], 201);
     }
 
     /**
@@ -49,7 +68,29 @@ class RoomController extends Controller
      */
     public function update(Request $request, Room $room)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'branch_id' => 'required|exists:branches,id',
+            'beds' => 'required|array',
+            'beds.*.name' => 'required|string|max:255'
+        ]);
+
+        $room->update([
+            'name' => $request->name,
+            'branch_id' => $request->branch_id,
+            'description' => $request->description,
+        ]);
+
+        foreach ($request->beds as $bed) {
+            Bed::updateOrCreate([
+                'id' => $bed['id'],
+            ], $bed);
+        }
+
+        return response()->json([
+            'message' => 'Room updated successfully',
+            'room' => $room,
+        ], 200);
     }
 
     /**

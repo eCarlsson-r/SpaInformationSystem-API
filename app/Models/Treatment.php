@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Treatment extends Model
 {
+    use \Illuminate\Database\Eloquent\Factories\HasFactory;
     protected $table = 'treatments';
     public $incrementing = false;
     protected $keyType = 'string';

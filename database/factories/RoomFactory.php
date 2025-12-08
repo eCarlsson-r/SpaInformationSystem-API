@@ -18,7 +18,6 @@ class RoomFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => $this->faker->regexify('[A-Z0-9]{11}'),
             'name' => $this->faker->word(),
             'description' => $this->faker->sentence(),
             'image' => $this->faker->imageUrl(),

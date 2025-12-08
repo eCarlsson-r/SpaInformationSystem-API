@@ -22,10 +22,6 @@ return new class extends Migration
             $table->string('applicable_days', 100);
             $table->time('applicable_time_end');
             $table->time('applicable_time_start');
-            $table->boolean('voucher');
-            $table->string('image', 200);
-            $table->string('video', 200)->default('');
-            $table->string('thumbnail', 200)->nullable();
             $table->integer('minimum_quantity');
             $table->integer('voucher_normal_quantity')->nullable();
             $table->integer('voucher_purchase_quantity')->nullable();

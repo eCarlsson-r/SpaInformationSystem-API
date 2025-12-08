@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Customer extends Model
 {
+    use \Illuminate\Database\Eloquent\Factories\HasFactory;
     protected $table = 'customers';
-    public $incrementing = false;
     public $timestamps = false;
 
     protected $fillable = [
@@ -19,7 +19,8 @@ class Customer extends Model
         'place_of_birth',
         'date_of_birth',
         'mobile',
-        'email'
+        'email',
+        'liability_account'
     ];
 
     protected $guarded = [

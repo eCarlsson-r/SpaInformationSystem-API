@@ -2,15 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Account extends Model
 {
-    use HasFactory;
+    use \Illuminate\Database\Eloquent\Factories\HasFactory;
     protected $table = 'accounts';
-    public $incrementing = false;
-    protected $keyType = 'string';
     public $timestamps = false;
 
     protected $fillable = [

@@ -6,11 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Voucher extends Model
 {
+    use \Illuminate\Database\Eloquent\Factories\HasFactory;
     protected $table = 'voucher';
-    protected $incrementing = false;
+    public $incrementing = false;
+    public $keyType = 'string';
     public $timestamps = false;
 
     protected $fillable = [
+        'id',
         'register_date',
         'register_time',
         'amount',

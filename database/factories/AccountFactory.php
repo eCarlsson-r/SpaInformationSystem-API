@@ -17,7 +17,6 @@ class AccountFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => $this->faker->numerify('#-###-##'),
             'name' => $this->faker->word(),
             'type' => $this->faker->randomElement(
                 [

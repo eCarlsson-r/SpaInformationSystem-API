@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Category extends Model
 {
+    use \Illuminate\Database\Eloquent\Factories\HasFactory;
     protected $table = 'categories';
     public $incrementing = false;
     public $timestamps = false;

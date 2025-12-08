@@ -15,14 +15,19 @@ class RoomOccupancyTest extends TestCase
 
     public function test_index_returns_occupancy_stats()
     {
-        $branch = Branch::factory()->create();
-        $room = Room::factory()->create(['branch_id' => $branch->id]);
+        $room = Room::factory()->create();
+        $customer = \App\Models\Customer::factory()->create();
+        $treatment = \App\Models\Treatment::factory()->create();
+        $employee = \App\Models\Employee::factory()->create();
         
         // Bed 1: Occupied (ongoing session)
         $bed1 = Bed::factory()->create(['room_id' => $room->id]);
+
         Session::factory()->create([
             'bed_id' => $bed1->id,
-            'branch_id' => $branch->id,
+            'customer_id' => $customer->id,
+            'treatment_id' => $treatment->id,
+            'employee_id' => $employee->id,
             'status' => 'ongoing',
             'date' => now()->toDateString(),
         ]);
@@ -31,7 +36,9 @@ class RoomOccupancyTest extends TestCase
         $bed2 = Bed::factory()->create(['room_id' => $room->id]);
         Session::factory()->create([
             'bed_id' => $bed2->id,
-            'branch_id' => $branch->id,
+            'customer_id' => $customer->id,
+            'treatment_id' => $treatment->id,
+            'employee_id' => $employee->id,
             'status' => 'completed',
             'date' => now()->toDateString(),
         ]);
@@ -46,7 +53,7 @@ class RoomOccupancyTest extends TestCase
         $data = $response->json();
         $roomData = $data[0];
 
-        $this->assertEquals(1, $roomData['occupied_beds'], 'Occupied beds count should be 1');
-        $this->assertEquals(2, $roomData['empty_beds'], 'Empty beds count should be 2');
+        $this->assertEquals(1, $roomData['occupied'], 'Occupied beds count should be 1');
+        $this->assertEquals(2, $roomData['empty'], 'Empty beds count should be 2');
     }
 }

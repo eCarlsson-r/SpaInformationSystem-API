@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('sessions', function (Blueprint $table) {
-            $table->integer('id');
+            $table->id();
             $table->time('order_time');
             $table->dateTime('reserved_time')->nullable();
             $table->string('bed_id', 30);

@@ -24,7 +24,7 @@ return new class extends Migration
             $table->tinyInteger('certified')->default(0);
             $table->boolean('vaccine1')->default(false);
             $table->boolean('vaccine2')->default(false);
-            $table->integer('recruiter')->default(0);
+            $table->integer('recruiter')->nullable();
             $table->string('branch_id', 10);
             $table->integer('base_salary');
             $table->string('expertise', 1000);

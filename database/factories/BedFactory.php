@@ -18,7 +18,6 @@ class BedFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => $this->faker->regexify('[A-Z0-9]{30}'),
             'name' => $this->faker->word(),
             'description' => $this->faker->sentence(),
             'room_id' => Room::factory(),

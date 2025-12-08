@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Account;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Branch>
@@ -18,14 +18,17 @@ class BranchFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => $this->faker->lexify('?????'),
             'name' => $this->faker->company(),
             'address' => $this->faker->address(),
             'city' => $this->faker->city(),
             'country' => $this->faker->country(),
             'phone' => $this->faker->phoneNumber(),
             'description' => $this->faker->sentence(),
-            'image' => $this->faker->imageUrl()
+            'image' => $this->faker->imageUrl(),
+            'cash_account' => Account::factory(),
+            'walkin_account' => Account::factory(),
+            'voucher_purchase_account' => Account::factory(),
+            'voucher_usage_account' => Account::factory()
         ];
     }
 }

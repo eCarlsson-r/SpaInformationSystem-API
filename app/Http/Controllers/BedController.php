@@ -20,7 +20,7 @@ class BedController extends Controller
                         ->whereIn('sessions.status', ['ongoing', 'waiting']);
                 })->leftJoin('employees', 'sessions.employee_id', '=', 'employees.id')
                 ->select('beds.*', 'sessions.*', 'employees.name as employee_name')->get();
-        } else return Bed::all();
+        } else return Bed::where("room_id", $request->input("room_id"))->get();
     }
 
     /**
@@ -52,6 +52,10 @@ class BedController extends Controller
      */
     public function destroy(Bed $bed)
     {
-        //
+        if ($bed->delete()) {
+            return response()->json(['message' => 'Bed deleted successfully'], 200);
+        } else {
+            return response()->json(['message' => 'Failed to delete bed'], 500);
+        }
     }
 }
