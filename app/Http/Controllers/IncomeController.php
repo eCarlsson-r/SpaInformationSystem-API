@@ -20,15 +20,40 @@ class IncomeController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $incomeId = Income::whereYear('date', date("Y"))->orderBy("id", "desc")->first();
+        if ($incomeId) $incomeId = $incomeId->id;
+        $previousIncomeId = Income::whereYear('date', '<', date("Y"))->orderBy("id", "desc")->first();
+        if ($previousIncomeId) $previousIncomeId = $previousIncomeId->id;
+
+        if ($incomeId) {
+            $reference = "EXO.BKM.".date("y").sprintf('%05d', ($incomeId-$previousIncomeId)+1);
+        } else {
+            $reference = "EXO.BKM.".date("y").sprintf('%05d', 1);
+        }
+        $income = Income::create([
+            'journal_reference' => $reference,
+            'date' => $request->date,
+            'description' => $request->description,
+            'partner_type' => $request->partner_type,
+            'partner' => $request->partner
+        ]);
+
+        $income->items()->createMany($request->items);
+        $income->payments()->createMany($request->payments);
+
+        if ($income) {
+            return response()->json($income, 201);
+        } else {
+            return response()->json(['message' => 'Failed to create income'], 500);
+        }
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Income $income)
     {
-        return Income::findOrFail($id);
+        return $income;
     }
 
     /**
@@ -36,7 +61,24 @@ class IncomeController extends Controller
      */
     public function update(Request $request, Income $income)
     {
-        //
+        $income->update([
+            'date' => $request->date,
+            'description' => $request->description,
+            'partner_type' => $request->partner_type,
+            'partner' => $request->partner
+        ]);
+
+        $income->items()->delete();
+        $income->payments()->delete();
+
+        $income->items()->createMany($request->items);
+        $income->payments()->createMany($request->payments);
+
+        if ($income) {
+            return response()->json($income, 200);
+        } else {
+            return response()->json(['message' => 'Failed to update income'], 500);
+        }
     }
 
     /**

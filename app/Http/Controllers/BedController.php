@@ -20,7 +20,8 @@ class BedController extends Controller
                         ->whereIn('sessions.status', ['ongoing', 'waiting']);
                 })->leftJoin('employees', 'sessions.employee_id', '=', 'employees.id')
                 ->select('beds.*', 'sessions.*', 'employees.name as employee_name')->get();
-        } else return Bed::where("room_id", $request->input("room_id"))->get();
+        } else if ($request->input("room_id")) return Bed::where("room_id", $request->input("room_id"))->get();
+        else return Bed::all();
     }
 
     /**

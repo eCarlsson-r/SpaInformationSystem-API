@@ -27,6 +27,6 @@ class IncomePayment extends Model
 
     public function wallet()
     {
-        return $this->hasOne(Wallet::class);
+        return $this->belongsTo(Wallet::class);
     }
 }

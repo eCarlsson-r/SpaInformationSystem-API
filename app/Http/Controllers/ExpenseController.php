@@ -20,7 +20,32 @@ class ExpenseController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $expenseId = Expense::whereYear('date', date("Y"))->orderBy("id", "desc")->first();
+        if ($expenseId) $expenseId = $expenseId->id;
+        $previousExpenseId = Expense::whereYear('date', '<', date("Y"))->orderBy("id", "desc")->first();
+        if ($previousExpenseId) $previousExpenseId = $previousExpenseId->id;
+
+        if ($expenseId) {
+            $reference = "EXO.BKK.".date("y").sprintf('%05d', ($expenseId-$previousExpenseId)+1);
+        } else {
+            $reference = "EXO.BKK.".date("y").sprintf('%05d', 1);
+        }
+        $expense = Expense::create([
+            'journal_reference' => $reference,
+            'date' => $request->date,
+            'description' => $request->description,
+            'partner_type' => $request->partner_type,
+            'partner' => $request->partner
+        ]);
+
+        $expense->items()->createMany($request->items);
+        $expense->payments()->createMany($request->payments);
+
+        if ($expense) {
+            return response()->json($expense, 201);
+        } else {
+            return response()->json(['message' => 'Failed to create expense'], 500);
+        }
     }
 
     /**
