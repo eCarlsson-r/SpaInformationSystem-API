@@ -34,9 +34,20 @@ class DiscountController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Discount $discount)
+    public function update(Request $request, $id)
     {
-        //
+        $discount = Discount::updateOrCreate(
+            ['id' => $id],
+            $request->all()
+        );
+
+        if ($discount->wasRecentlyCreated) {
+            return response()->json($discount, 201);
+        } else if ($discount->wasChanged()) {
+            return response()->json($discount, 200);
+        } else {
+            return response()->json(['message' => 'Failed to update discount'], 500);
+        }
     }
 
     /**

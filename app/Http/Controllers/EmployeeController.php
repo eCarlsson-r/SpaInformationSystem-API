@@ -34,7 +34,13 @@ class EmployeeController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $employee = Employee::create($request->all());
+        
+        if ($employee) {
+            return response()->json($employee, 201);
+        } else {
+            return response()->json(['message' => 'Failed to create employee'], 500);
+        }
     }
 
     /**
@@ -50,7 +56,11 @@ class EmployeeController extends Controller
      */
     public function update(Request $request, Employee $employee)
     {
-        //
+        if ($employee->update($request->all())) {
+            return response()->json($employee, 200);
+        } else {
+            return response()->json(['message' => 'Failed to update employee'], 500);
+        }
     }
 
     /**

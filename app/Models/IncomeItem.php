@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class IncomeItem extends Model
 {
+    use \Illuminate\Database\Eloquent\Factories\HasFactory;
     protected $table = 'income_items';
     public $timestamps = false;
     
     protected $fillable = [
+        'income_id',
         'type',
         'transaction',
         'amount',

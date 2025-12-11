@@ -14,6 +14,7 @@ class Voucher extends Model
 
     protected $fillable = [
         'id',
+        'treatment_id',
         'register_date',
         'register_time',
         'amount',

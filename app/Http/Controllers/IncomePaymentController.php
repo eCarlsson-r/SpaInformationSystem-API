@@ -22,6 +22,12 @@ class IncomePaymentController extends Controller
     {
         $incomePayment = IncomePayment::create($request->all());
 
+        Journal::find(Income::find($request->income_id)->journal_id)->records()->create([
+            'account_id' => Wallet::find($request->wallet_id)->account_id,
+            'debit' => 0,
+            'credit' => $request->amount
+        ]);
+
         if ($incomePayment) {
             return response()->json($incomePayment, 200);
         } else {

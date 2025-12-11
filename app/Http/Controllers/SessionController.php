@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Session;
+use App\Models\Walkin;
+use App\Models\Voucher;
 use Illuminate\Http\Request;
 
 class SessionController extends Controller
@@ -47,7 +49,36 @@ class SessionController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $startDate = explode("T", $request->start);
+
+        $session = Session::create([
+            'bed_id' => $request->bed_id,
+            'customer_id' => $request->customer_id,
+            'payment' => $request->payment,
+            'date' => $startDate[0],
+            'start' => $startDate[1],
+            'employee_id' => $request->employee_id,
+            'treatment_id' => $request->treatment_id,
+            'status' => (isset($request->start)) ? 'ongoing' : 'waiting'
+        ]);
+
+        if (isset($request->voucher_id)) {
+            $updateVoucher = Voucher::updateOrCreate(
+                ['id' => $request->voucher_id],
+                ['session_id' => $session->id]
+            );
+        } else {
+            $updateWalkin = Walkin::updateOrCreate(
+                ['id' => $request->walkin_id],
+                ['session_id' => $session->id]
+            );
+        }
+        
+        if ($session) {
+            return response()->json($session, 201);
+        } else {
+            return response()->json(['message' => 'Failed to create session'], 500);
+        }
     }
 
     /**
@@ -63,7 +94,13 @@ class SessionController extends Controller
      */
     public function update(Request $request, Session $session)
     {
-        //
+        $session->update($request->all());
+        
+        if ($session) {
+            return response()->json($session, 200);
+        } else {
+            return response()->json(['message' => 'Failed to update session'], 500);
+        }
     }
 
     /**

@@ -26,6 +26,7 @@ use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\IncomeItemController;
 use App\Http\Controllers\IncomePaymentController;
 use App\Http\Controllers\JournalController;
+use App\Http\Controllers\JournalRecordController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\SessionController;
@@ -46,6 +47,7 @@ Route::get('/dashboard', [DashboardController::class, 'dashboard']);
 Route::get('/daily', [DashboardController::class, 'daily']);
 
 Route::apiResource('journal', JournalController::class);
+Route::apiResource('journalrecord', JournalRecordController::class);
 Route::apiResource('income', IncomeController::class);
 Route::apiResource('incomeitem', IncomeItemController::class);
 Route::apiResource('incomepayment', IncomePaymentController::class);

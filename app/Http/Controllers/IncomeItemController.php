@@ -22,6 +22,12 @@ class IncomeItemController extends Controller
     {
         $incomeItem = IncomeItem::create($request->all());
 
+        Journal::find(Income::find($request->income_id)->journal_id)->records()->create([
+            'account_id' => $request->account_id,
+            'debit' => $request->amount,
+            'credit' => 0
+        ]);
+
         if ($incomeItem) {
             return response()->json($incomeItem, 200);
         } else {

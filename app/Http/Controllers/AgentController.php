@@ -20,7 +20,13 @@ class AgentController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $account = Agent::create($request->all());
+        
+        if ($account) {
+            return response()->json($account, 201);
+        } else {
+            return response()->json(['message' => 'Failed to create account'], 500);
+        }
     }
 
     /**
@@ -36,7 +42,11 @@ class AgentController extends Controller
      */
     public function update(Request $request, Agent $agent)
     {
-        //
+        if ($agent->update($request->all())) {
+            return response()->json($agent, 200);
+        } else {
+            return response()->json(['message' => 'Failed to update agent'], 500);
+        }
     }
 
     /**

@@ -13,17 +13,17 @@ return new class extends Migration
     {
         Schema::create('sessions', function (Blueprint $table) {
             $table->id();
-            $table->time('order_time');
+            $table->time('order_time')->nullable();
             $table->dateTime('reserved_time')->nullable();
-            $table->string('bed_id', 30);
-            $table->integer('customer_id');
+            $table->foreignId('bed_id')->constrained('beds')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('customer_id')->constrained('customers')->cascadeOnUpdate()->cascadeOnDelete();
             $table->string('payment', 100);
             $table->date('date');
-            $table->time('start');
-            $table->time('end');
+            $table->time('start')->nullable();
+            $table->time('end')->nullable();
             $table->string('status', 10);
             $table->string('treatment_id', 10);
-            $table->integer('employee_id');
+            $table->foreignId('employee_id')->nullable()->constrained('employees')->cascadeOnUpdate()->cascadeOnDelete();
         });
     }
 

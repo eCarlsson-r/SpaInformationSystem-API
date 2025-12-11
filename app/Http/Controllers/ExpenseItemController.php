@@ -22,6 +22,12 @@ class ExpenseItemController extends Controller
     {
         $expenseItem = ExpenseItem::create($request->all());
 
+        Journal::find(Expense::find($request->expense_id)->journal_id)->records()->create([
+            'account_id' => $request->account_id,
+            'debit' => $request->amount,
+            'credit' => 0
+        ]);
+
         if ($expenseItem) {
             return response()->json($expenseItem, 200);
         } else {

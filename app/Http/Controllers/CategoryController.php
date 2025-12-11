@@ -34,9 +34,20 @@ class CategoryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Category $category)
+    public function update(Request $request, $id)
     {
-        //
+        $category = Category::updateOrCreate(
+            ['id' => $id],
+            $request->all()
+        );
+
+        if ($category->wasRecentlyCreated) {
+            return response()->json($category, 201);
+        } else if ($category->wasChanged()) {
+            return response()->json($category, 200);
+        } else {
+            return response()->json(['message' => 'Failed to update category'], 500);
+        }
     }
 
     /**

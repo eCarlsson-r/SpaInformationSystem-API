@@ -20,7 +20,13 @@ class WalletController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $wallet = Wallet::create($request->all());
+        
+        if ($wallet) {
+            return response()->json($wallet, 201);
+        } else {
+            return response()->json(['message' => 'Failed to create wallet'], 500);
+        }
     }
 
     /**
@@ -28,7 +34,7 @@ class WalletController extends Controller
      */
     public function show(Wallet $wallet)
     {
-        //
+        return $wallet;
     }
 
     /**
@@ -36,7 +42,11 @@ class WalletController extends Controller
      */
     public function update(Request $request, Wallet $wallet)
     {
-        //
+        if ($wallet->update($request->all())) {
+            return response()->json($wallet, 200);
+        } else {
+            return response()->json(['message' => 'Failed to update wallet'], 500);
+        }
     }
 
     /**

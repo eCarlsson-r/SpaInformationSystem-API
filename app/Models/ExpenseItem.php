@@ -6,10 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class ExpenseItem extends Model
 {
+    use \Illuminate\Database\Eloquent\Factories\HasFactory;
     protected $table = 'expense_items';
     public $timestamps = false;
 
     protected $fillable = [
+        'expense_id',
+        'account_id',
+        'type',
         'amount',
         'description'
     ];

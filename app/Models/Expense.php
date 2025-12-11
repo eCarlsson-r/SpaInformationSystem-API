@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Expense extends Model
 {
+    use \Illuminate\Database\Eloquent\Factories\HasFactory;
     protected $table = 'expenses';
     public $timestamps = false;
 

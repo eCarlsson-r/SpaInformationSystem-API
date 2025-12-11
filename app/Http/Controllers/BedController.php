@@ -59,9 +59,9 @@ class BedController extends Controller
             'name' => $request->name,
             'description' => $request->description,
         ])) {
-            return response()->json($branch, 200);
+            return response()->json($bed, 200);
         } else {
-            return response()->json(['message' => 'Failed to update branch'], 500);
+            return response()->json(['message' => 'Failed to update bed'], 500);
         }
     }
 

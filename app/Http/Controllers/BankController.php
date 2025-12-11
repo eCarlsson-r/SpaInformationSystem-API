@@ -34,9 +34,20 @@ class BankController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Bank $bank)
+    public function update(Request $request, $id)
     {
-        //
+        $bank = Bank::updateOrCreate(
+            ['id' => $id],
+            $request->all()
+        );
+
+        if ($bank->wasRecentlyCreated) {
+            return response()->json($bank, 201);
+        } else if ($bank->wasChanged()) {
+            return response()->json($bank, 200);
+        } else {
+            return response()->json(['message' => 'Failed to update bank'], 500);
+        }
     }
 
     /**

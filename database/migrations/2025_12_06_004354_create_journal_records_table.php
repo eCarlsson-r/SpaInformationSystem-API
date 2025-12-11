@@ -12,14 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('journal_records', function (Blueprint $table) {
-            $table->integer('id', true);
-            $table->integer('journal_id')->index('journal-id');
+            $table->id();
+            $table->foreignId('journal_id')->constrained('journals')->cascadeOnUpdate()->cascadeOnDelete();
             $table->string('account_id', 100)->nullable();
             $table->integer('debit')->default(0);
             $table->integer('credit')->default(0);
             $table->string('description', 500);
-
-            $table->foreign(['journal_id'], 'journal_records_ibfk_1')->references(['id'])->on('journals')->onUpdate('cascade')->onDelete('cascade');
         });
     }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Voucher;
+use App\Models\Treatment;
 use Illuminate\Http\Request;
 
 class VoucherController extends Controller
@@ -22,32 +23,37 @@ class VoucherController extends Controller
      */
     public function store(Request $request)
     {
-        $treatment = $request->input("treatment");
+        $treatment = $request->input("treatment_id");
         $voucherStart = $request->input("start");
         $start = (int)explode($treatment, $voucherStart)[1];
         $voucherEnd = $request->input("end");
         $end = (int)explode($treatment, $voucherEnd)[1];
         $date = date("Y-m-d");
         $time = date("H:i:s");
-        $connection = connectToDB();
-        $treatmentInfo = Treatment::where("id", $treatment)->first();
-        $existingVouchers = Voucher::whereIn("id", [$voucherStart, $voucherEnd])->get();
+        $treatmentInfo = Treatment::where("id", $treatment);
+        $existingVouchers = Voucher::whereBetween("id", [$voucherStart, $voucherEnd])->get();
         
-        if ($existingVouchers->count() > 0) {
-            return response()->json($existingVouchers, 200);
-        } else {
-            $vouchers = array();
-            for ($i=$start; $i <= $end; $i++) {
-                $voucherCode = $treatment.sprintf('%06d', $i);
-                array_push($vouchers, [
-                    "id" => $voucherCode,
-                    "treatment_id" => $treatment,
-                    "register_date" => $date,
-                    "register_time" => $time,
-                ]);
+        if ($treatmentInfo->first()) {
+            if ($existingVouchers->count() > 0) {
+                return response()->json($existingVouchers, 200);
+            } else {
+                $vouchers = collect();
+                for ($i=$start; $i <= $end; $i++) {
+                    $voucherCode = $treatment.sprintf('%06d', $i);
+                    $voucher = Voucher::create([
+                        "id" => $voucherCode,
+                        "treatment_id" => $treatmentInfo->first()->id,
+                        "register_date" => $date,
+                        "register_time" => $time,
+                    ]);
+                    $vouchers->push($voucher);
+                }
+                return response()->json($vouchers, 201);
             }
-            $voucher = Voucher::createMany($vouchers);
-            return response()->json($voucher, 201);
+        } else {
+            return response()->json([
+                "message" => "Treatment not found"
+            ], 500);
         }
     }
 

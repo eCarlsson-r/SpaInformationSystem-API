@@ -12,6 +12,7 @@ class Category extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'id',
         'name',
         'description',
         'i18n',

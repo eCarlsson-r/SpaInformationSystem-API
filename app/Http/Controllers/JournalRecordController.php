@@ -42,8 +42,13 @@ class JournalRecordController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(JournalRecord $journalRecord)
+    public function destroy($id)
     {
-        //
+        $journalRecord = JournalRecord::find($id);
+        if ($journalRecord->delete()) {
+            return response()->json(['message' => 'Journal record deleted successfully'], 200);
+        } else {
+            return response()->json(['message' => 'Failed to delete journal record'], 500);
+        }
     }
 }

@@ -17,11 +17,21 @@ class Session extends Model
         'date',
         'start',
         'end',
-        'status'
+        'status',
+        'treatment_id',
+        'employee_id',
+        'bed_id',
+        'customer_id',
+        'voucher_id',
+        'walkin_id'
     ];
 
     protected $guarded = [
         'id'
+    ];
+
+    protected $attributes = [
+        'status' => 'waiting'
     ];
 
     public function treatment()

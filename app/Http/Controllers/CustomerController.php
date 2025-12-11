@@ -20,7 +20,13 @@ class CustomerController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $customer = Customer::create($request->all());
+        
+        if ($customer) {
+            return response()->json($customer, 201);
+        } else {
+            return response()->json(['message' => 'Failed to create customer'], 500);
+        }
     }
 
     /**
@@ -36,7 +42,11 @@ class CustomerController extends Controller
      */
     public function update(Request $request, Customer $customer)
     {
-        //
+        if ($customer->update($request->all())) {
+            return response()->json($customer, 200);
+        } else {
+            return response()->json(['message' => 'Failed to update customer'], 500);
+        }
     }
 
     /**

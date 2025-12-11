@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('expense_items', function (Blueprint $table) {
             $table->integer('id', true);
-            $table->foreignId('expense_id')->constrained('expense')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('expense_id')->constrained('expenses')->cascadeOnUpdate()->cascadeOnDelete();
             $table->foreignId('account_id')->constrained('accounts')->cascadeOnUpdate()->cascadeOnDelete();
             $table->integer('amount');
             $table->string('description', 50);

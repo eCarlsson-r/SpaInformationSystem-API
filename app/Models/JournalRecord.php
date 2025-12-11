@@ -19,6 +19,10 @@ class JournalRecord extends Model
         'description'
     ];
 
+    protected $guarded = [
+        'id'
+    ];
+
     public function journal()
     {
         return $this->belongsTo(Journal::class);
