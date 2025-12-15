@@ -13,6 +13,12 @@ class RoomControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticate();
+    }
+
     public function test_index_returns_all_rooms_with_relationships()
     {
         $branch = Branch::factory()->create();

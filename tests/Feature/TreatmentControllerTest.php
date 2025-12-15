@@ -12,6 +12,12 @@ class TreatmentControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticate();
+    }
+
     public function test_index_returns_treatments()
     {
         $treatments = Treatment::factory()->count(3)->create();

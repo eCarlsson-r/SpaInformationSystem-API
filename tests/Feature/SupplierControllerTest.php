@@ -10,6 +10,12 @@ class SupplierControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticate();
+    }
+
     public function test_index_returns_all_suppliers()
     {
         Supplier::factory()->count(3)->create();

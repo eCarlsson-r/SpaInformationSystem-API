@@ -8,6 +8,8 @@ use App\Models\Sales;
 use App\Models\Bonus;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use App\Models\SalesRecord;
+use Illuminate\Support\Facades\DB;
 
 class CompensationService
 {
@@ -31,6 +33,80 @@ class CompensationService
         $therapists = $this->calculateTherapistCompensation();
 
         return $cashiers->merge($therapists);
+    }
+
+    /**
+     * Calculate treatment bonuses (Voucher + Trainer) grouping by Employee then Treatment
+     * Accepts array of employee IDs
+     */
+    public function calculateTreatmentBonuses(array $employeeIds): Collection
+    {
+        $startDate = $this->startDate;
+        $endDate = $this->endDate;
+
+        // PART 1: Voucher Query
+        $voucherData = SalesRecord::query()
+            ->join('sales', 'sales_records.sales_id', '=', 'sales.id')
+            ->join('treatments', 'sales_records.treatment_id', '=', 'treatments.id')
+            ->whereIn('sales.employee_id', $employeeIds)
+            ->where('sales_records.redeem_type', 'voucher')
+            ->whereBetween('sales.date', [$startDate, $endDate])
+            ->select([
+                'sales.employee_id',
+                'treatments.name as treatment_name',
+                DB::raw('SUM(sales_records.price) as voucher_price'),
+                DB::raw('COUNT(sales_records.id) as voucher_qty'),
+                DB::raw('FLOOR(SUM(CASE WHEN sales_records.total_price > 0 THEN 1 ELSE 0 END) * 10000 / 1000) * 1000 as voucher_total'),
+                DB::raw('0 as recruit_bonus')
+            ])
+            ->groupBy('sales.employee_id', 'treatments.name')
+            ->get();
+
+        // PART 2: Trainer/Recruit Bonus Query
+        $trainerData = Session::query()
+            ->join('employees as term_emp', 'sessions.employee_id', '=', 'term_emp.id')
+            ->join('treatments', 'sessions.treatment_id', '=', 'treatments.id')
+            ->join('grades', function($join) use ($startDate, $endDate) {
+                $join->on('term_emp.id', '=', 'grades.employee_id')
+                     ->where('grades.start_date', '<=', $endDate)
+                     ->where(function($q) use ($startDate) {
+                         $q->where('grades.end_date', '>=', $startDate)
+                           ->orWhereNull('grades.end_date');
+                     });
+            })
+            ->join('bonus', function($join) {
+                $join->on('grades.grade', '=', 'bonus.grade')
+                     ->on('sessions.treatment_id', '=', 'bonus.treatment_id');
+            })
+            ->whereIn('term_emp.recruiter', $employeeIds)
+            ->whereBetween('sessions.date', [$startDate, $endDate])
+            ->select([
+                'term_emp.recruiter as employee_id',
+                'treatments.name as treatment_name',
+                DB::raw('0 as voucher_price'),
+                DB::raw('0 as voucher_qty'),
+                DB::raw('0 as voucher_total'),
+                DB::raw('COALESCE(SUM(bonus.trainer_deduction), 0) as recruit_bonus')
+            ])
+            ->groupBy('term_emp.recruiter', 'treatments.name')
+            ->get();
+
+        // Combine
+        $merged = $voucherData->merge($trainerData);
+
+        // Group by Employee ID first
+        return $merged->groupBy('employee_id')->map(function ($empItems) {
+            // Then Group by Treatment Name
+            return $empItems->groupBy('treatment_name')->map(function ($items, $name) {
+                return [
+                    'treatment_name' => $name,
+                    'voucher_price' => $items->sum('voucher_price'),
+                    'voucher_qty' => $items->sum('voucher_qty'),
+                    'voucher_bonus' => $items->sum('voucher_total'),
+                    'recruit_bonus' => $items->sum('recruit_bonus'),
+                ];
+            })->values();
+        });
     }
 
     /**
@@ -103,8 +179,131 @@ class CompensationService
     }
 
     /**
-     * PART 2: Therapists (Grade ≠ 'K')
+     * Calculate detailed bonuses for a list of employees, automatically determining report type based on Grade.
+     * Cashiers (K) -> Treatment Bonuses (Voucher)
+     * Therapists -> Therapist Treatment Bonuses (Session)
      */
+    public function calculateDetailedBonuses(array $employeeIds): Collection
+    {
+        // 1. Fetch Employees with their active grade
+        $employees = Employee::query()
+            ->whereIn('id', $employeeIds)
+            ->with(['grade' => fn($q) => $this->activeGradeScope($q)])
+            ->get();
+
+        $cashierIds = [];
+        $therapistIds = [];
+
+        foreach ($employees as $emp) {
+            $grade = $emp->grade->first()?->grade;
+            if ($grade === 'K') {
+                $cashierIds[] = $emp->id;
+            } else {
+                $therapistIds[] = $emp->id;
+            }
+        }
+
+        $results = collect();
+
+        // 2. Calculate for Cashiers
+        if (!empty($cashierIds)) {
+            $cashierBonuses = $this->calculateTreatmentBonuses($cashierIds);
+            foreach ($cashierBonuses as $empId => $data) {
+                $results->put($empId, $data);
+            }
+        }
+
+        // 3. Calculate for Therapists
+        if (!empty($therapistIds)) {
+            $therapistBonuses = $this->calculateTherapistTreatmentBonuses($therapistIds);
+            foreach ($therapistBonuses as $empId => $data) {
+                $results->put($empId, $data);
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Calculate therapist treatment bonuses (Session Bonus + Trainer) grouping by Employee then Treatment
+     * Accepts array of employee IDs
+     */
+    public function calculateTherapistTreatmentBonuses(array $employeeIds): Collection
+    {
+        $startDate = $this->startDate;
+        $endDate = $this->endDate;
+
+        // PART 1: Therapist Session Bonus Query
+        $therapistData = Session::query()
+            ->join('employees', 'sessions.employee_id', '=', 'employees.id')
+            ->join('treatments', 'sessions.treatment_id', '=', 'treatments.id')
+            ->join('grades', function($join) use ($startDate, $endDate) {
+                $join->on('employees.id', '=', 'grades.employee_id')
+                     ->where('grades.start_date', '<=', $endDate)
+                     ->where(function($q) use ($startDate) {
+                         $q->where('grades.end_date', '>=', $startDate)
+                           ->orWhereNull('grades.end_date');
+                     });
+            })
+            ->join('bonus', function($join) {
+                $join->on('grades.grade', '=', 'bonus.grade')
+                     ->on('sessions.treatment_id', '=', 'bonus.treatment_id');
+            })
+            ->whereIn('employees.id', $employeeIds)
+            ->whereBetween('sessions.date', [$startDate, $endDate])
+            ->select([
+                'employees.id as employee_id',
+                'treatments.name as treatment_name',
+                DB::raw('SUM(treatments.price) as treatment_price'),
+                DB::raw('COALESCE(SUM(bonus.gross_bonus), 0) as therapist_bonus'),
+                DB::raw('0 as recruit_bonus')
+            ])
+            ->groupBy('employees.id', 'treatments.name')
+            ->get();
+
+        // PART 2: Trainer/Recruit Bonus Query
+        $trainerData = Session::query()
+            ->join('employees as term_emp', 'sessions.employee_id', '=', 'term_emp.id')
+            ->join('treatments', 'sessions.treatment_id', '=', 'treatments.id')
+            ->join('grades', function($join) use ($startDate, $endDate) {
+                $join->on('term_emp.id', '=', 'grades.employee_id')
+                     ->where('grades.start_date', '<=', $endDate)
+                     ->where(function($q) use ($startDate) {
+                         $q->where('grades.end_date', '>=', $startDate)
+                           ->orWhereNull('grades.end_date');
+                     });
+            })
+            ->join('bonus', function($join) {
+                $join->on('grades.grade', '=', 'bonus.grade')
+                     ->on('sessions.treatment_id', '=', 'bonus.treatment_id');
+            })
+            ->whereIn('term_emp.recruiter', $employeeIds)
+            ->whereBetween('sessions.date', [$startDate, $endDate])
+            ->select([
+                'term_emp.recruiter as employee_id',
+                'treatments.name as treatment_name',
+                DB::raw('0 as treatment_price'),
+                DB::raw('0 as therapist_bonus'),
+                DB::raw('COALESCE(SUM(bonus.trainer_deduction), 0) as recruit_bonus')
+            ])
+            ->groupBy('term_emp.recruiter', 'treatments.name')
+            ->get();
+
+        // Combine
+        $merged = $therapistData->merge($trainerData);
+
+        return $merged->groupBy('employee_id')->map(function ($empItems) {
+            return $empItems->groupBy('treatment_name')->map(function ($items, $name) {
+                return [
+                    'treatment_name' => $name,
+                    'treatment_price' => $items->sum('treatment_price'),
+                    'therapist_bonus' => $items->sum('therapist_bonus'),
+                    'recruit_bonus' => $items->sum('recruit_bonus'),
+                ];
+            })->values();
+        });
+    }
+
     protected function calculateTherapistCompensation(): Collection
     {
         return Employee::query()
@@ -283,8 +482,8 @@ class CompensationService
      */
     protected function activeGradeScope($query, ?string $grade = null)
     {
-        $query->where('start_date', '<=', $this->startDate)
-            ->where(fn($q) => $q->where('end_date', '>=', $this->endDate)->orWhereNull('end_date'));
+        $query->where('start_date', '<=', $this->endDate)
+            ->where(fn($q) => $q->where('end_date', '>=', $this->startDate)->orWhereNull('end_date'));
 
         if ($grade) {
             $query->where('grade', $grade);
@@ -295,8 +494,8 @@ class CompensationService
 
     protected function activeGradeJoinScope($join)
     {
-        $join->where('grades.start_date', '<=', $this->startDate)
-            ->where(fn($q) => $q->where('grades.end_date', '>=', $this->endDate)
+        $join->where('grades.start_date', '<=', $this->endDate)
+            ->where(fn($q) => $q->where('grades.end_date', '>=', $this->startDate)
                 ->orWhereNull('grades.end_date'));
     }
 

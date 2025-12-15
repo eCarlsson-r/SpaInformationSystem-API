@@ -12,6 +12,12 @@ class CustomerControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticate();
+    }
+
     public function test_index_returns_all_customers()
     {
         $customers = Customer::factory()->count(3)->create();

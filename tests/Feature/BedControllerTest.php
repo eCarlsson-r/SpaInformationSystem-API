@@ -12,6 +12,12 @@ class BedControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticate();
+    }
+
     public function test_index_returns_all_beds()
     {
         Bed::factory()->count(3)->create();

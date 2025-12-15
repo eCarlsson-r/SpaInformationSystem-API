@@ -19,9 +19,9 @@ return new class extends Migration
             $table->integer('therapist_bonus');
             $table->integer('recruit_bonus');
             $table->integer('addition');
-            $table->string('addition_description', 500)->default('');
+            $table->string('addition_description', 500)->nullable();
             $table->integer('deduction');
-            $table->string('deduction_description', 500)->default('');
+            $table->string('deduction_description', 500)->nullable();
             $table->integer('total');
 
             $table->foreign(['period_id'], 'compensations_ibfk_1')->references(['id'])->on('periods')->onUpdate('cascade')->onDelete('cascade');

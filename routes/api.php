@@ -47,6 +47,7 @@ Route::post('/subscribe', [AuthController::class, 'subscribe']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'dashboard']);
     Route::get('/daily', [DashboardController::class, 'daily']);
+    Route::post('/files', [AuthController::class, 'upload']);
 
     Route::apiResource('journal', JournalController::class);
     Route::apiResource('journalrecord', JournalRecordController::class);

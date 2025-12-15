@@ -15,9 +15,19 @@ class CompensationController extends Controller
     {
         $compensation = Compensation::with('employee')->where('period_id', $request->input('period_id'))->get();
         
+        \Illuminate\Support\Facades\Log::info('Compensation Query Params:', $request->all());
+        
         if ($compensation->isNotEmpty()) {
             return response()->json($compensation, 200);
-        } else if ($request->start && $request->end) {
+        } 
+        // [NEW] Check if we want a specific report for specific employees
+        // User confirmed request->employees is an array
+        else if ($request->start && $request->end && $request->has('employees')) {
+            $service = new CompensationService($request->start, $request->end);
+            // Automatically determine report type (Voucher for Cashier, Session for Therapist)
+            return response()->json($service->calculateDetailedBonuses($request->employees));
+        }
+        else if ($request->start && $request->end) {
             // Calculate compensation on-the-fly if not stored yet
             $service = new CompensationService($request->start, $request->end);
             $calculated = $service->calculate();
@@ -33,9 +43,7 @@ class CompensationController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'period_id' => 'required|exists:periods,id',
-            'start' => 'required|date',
-            'end' => 'required|date|after_or_equal:start',
+            'period_id' => 'required|exists:periods,id'
         ]);
 
         foreach ($request->compensations as $comp) {

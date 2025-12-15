@@ -12,6 +12,12 @@ class EmployeeControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticate();
+    }
+
     public function test_index_returns_employees()
     {
         $employees = Employee::factory()->count(3)->create();
