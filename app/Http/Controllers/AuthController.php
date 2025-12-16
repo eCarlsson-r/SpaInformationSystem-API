@@ -78,7 +78,6 @@ class AuthController extends Controller
             if (count($filesId) > 0) return response()->json(['files_id' => $filesId], 201);
             else return response()->json(['message' => 'Failed to upload files.'], 500);
         } else {
-            print_r($request->all());
             $decodedFile = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->input('file')));
             if ($decodedFile) {
                 // Save the file to the default storage disk (e.g., 'local' or 's3')

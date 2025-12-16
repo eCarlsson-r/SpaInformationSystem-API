@@ -16,10 +16,10 @@ return new class extends Migration
             $table->string('name', 50);
             $table->string('description', 200);
             $table->string('i18n', 50)->nullable();
-            $table->string('header_img', 500);
-            $table->string('body_img1', 500);
-            $table->string('body_img2', 500);
-            $table->string('body_img3', 500);
+            $table->foreignId('header_img')->nullable()->constrained('files')->nullOnDelete();
+            $table->foreignId('body_img1')->nullable()->constrained('files')->nullOnDelete();
+            $table->foreignId('body_img2')->nullable()->constrained('files')->nullOnDelete();
+            $table->foreignId('body_img3')->nullable()->constrained('files')->nullOnDelete();
         });
     }
 
