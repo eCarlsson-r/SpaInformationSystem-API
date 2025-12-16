@@ -19,13 +19,11 @@ class CompensationController extends Controller
         
         if ($compensation->isNotEmpty()) {
             return response()->json($compensation, 200);
-        } 
-        // [NEW] Check if we want a specific report for specific employees
-        // User confirmed request->employees is an array
-        else if ($request->start && $request->end && $request->has('employees')) {
+        } else if ($request->start && $request->end && $request->has('employees')) {
+            // [NEW] Check if we want a specific report for specific employees
             $service = new CompensationService($request->start, $request->end);
             // Automatically determine report type (Voucher for Cashier, Session for Therapist)
-            return response()->json($service->calculateDetailedBonuses($request->employees));
+            return response()->json($service->calculateDetailedBonuses(explode(",", $request->employees)));
         }
         else if ($request->start && $request->end) {
             // Calculate compensation on-the-fly if not stored yet

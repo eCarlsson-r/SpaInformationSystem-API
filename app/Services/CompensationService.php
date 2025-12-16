@@ -59,8 +59,7 @@ class CompensationService
                 DB::raw('FLOOR(SUM(CASE WHEN sales_records.total_price > 0 THEN 1 ELSE 0 END) * 10000 / 1000) * 1000 as voucher_total'),
                 DB::raw('0 as recruit_bonus')
             ])
-            ->groupBy('sales.employee_id', 'treatments.name')
-            ->get();
+            ->groupBy('sales.employee_id', 'treatments.name');
 
         // PART 2: Trainer/Recruit Bonus Query
         $trainerData = Session::query()
@@ -88,11 +87,10 @@ class CompensationService
                 DB::raw('0 as voucher_total'),
                 DB::raw('COALESCE(SUM(bonus.trainer_deduction), 0) as recruit_bonus')
             ])
-            ->groupBy('term_emp.recruiter', 'treatments.name')
-            ->get();
+            ->groupBy('term_emp.recruiter', 'treatments.name');
 
         // Combine
-        $merged = $voucherData->merge($trainerData);
+        $merged = $trainerData->unionAll($voucherData)->get();
 
         // Group by Employee ID first
         return $merged->groupBy('employee_id')->map(function ($empItems) {
@@ -258,8 +256,7 @@ class CompensationService
                 DB::raw('COALESCE(SUM(bonus.gross_bonus), 0) as therapist_bonus'),
                 DB::raw('0 as recruit_bonus')
             ])
-            ->groupBy('employees.id', 'treatments.name')
-            ->get();
+            ->groupBy('employees.id', 'treatments.name');
 
         // PART 2: Trainer/Recruit Bonus Query
         $trainerData = Session::query()
@@ -286,11 +283,10 @@ class CompensationService
                 DB::raw('0 as therapist_bonus'),
                 DB::raw('COALESCE(SUM(bonus.trainer_deduction), 0) as recruit_bonus')
             ])
-            ->groupBy('term_emp.recruiter', 'treatments.name')
-            ->get();
+            ->groupBy('term_emp.recruiter', 'treatments.name');
 
         // Combine
-        $merged = $therapistData->merge($trainerData);
+        $merged = $trainerData->unionAll($therapistData)->get();
 
         return $merged->groupBy('employee_id')->map(function ($empItems) {
             return $empItems->groupBy('treatment_name')->map(function ($items, $name) {
