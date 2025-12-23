@@ -14,7 +14,7 @@ class GradeFactory extends Factory
     {
         return [
             'employee_id' => Employee::factory(),
-            'grade' => $this->faker->randomElement(['A', 'B', 'C', 'D']),
+            'grade' => $this->faker->randomElement(['A', 'B', 'C', 'D', 'E']),
             'start_date' => $this->faker->date(),
             'end_date' => null,
         ];

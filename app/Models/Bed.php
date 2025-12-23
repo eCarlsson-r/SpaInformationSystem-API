@@ -26,8 +26,8 @@ class Bed extends Model
         return $this->belongsTo(Room::class);
     }
 
-    public function sessions()
+    public function session()
     {
-        return $this->hasMany(Session::class);
+        return $this->hasOne(Session::class)->where('status', 'waiting')->orWhere('status', 'ongoing');
     }
 }

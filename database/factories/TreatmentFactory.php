@@ -24,7 +24,9 @@ class TreatmentFactory extends Factory
             'applicable_time_end' => '21:00:00',
             'voucher_normal_quantity' => 1,
             'voucher_purchase_quantity' => 1,
-            'minimum_quantity' => 1
+            'minimum_quantity' => 1,
+            'body_img' => $this->faker->image($dir = storage_path('app/public/images'), $width = 640, $height = 480, null, false),
+            'icon_img' => $this->faker->image($dir = storage_path('app/public/images'), $width = 64, $height = 64, null, false)
         ];
     }
 }

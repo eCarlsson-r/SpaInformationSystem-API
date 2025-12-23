@@ -46,8 +46,8 @@ class EmployeeTest extends TestCase
         $employee = Employee::factory()->create();
         $grade = Grade::factory()->create(['employee_id' => $employee->id]);
 
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Collection::class, $employee->grade);
-        $this->assertTrue($employee->grade->contains($grade));
+        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Model::class, $employee->grade);
+        $this->assertTrue($employee->grade->is($grade));
     }
 
     public function test_employee_has_many_attendance()

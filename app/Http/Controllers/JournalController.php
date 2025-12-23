@@ -34,9 +34,9 @@ class JournalController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Journal $journal)
+    public function show(String $id)
     {
-        return $journal;
+        return Journal::with('records')->findOrFail($id);
     }
 
     /**
@@ -44,7 +44,53 @@ class JournalController extends Controller
      */
     public function update(Request $request, Journal $journal)
     {
-        //
+        $request->validate([
+            'reference' => 'required',
+            'date' => 'required',
+            'description' => 'required|string|max:255',
+            'records' => 'required|array',
+            'records.*.id' => 'nullable', // Allow null for new records
+            'records.*.description' => 'required|string|max:255',
+            'records.*.debit' => 'required|numeric',
+            'records.*.credit' => 'required|numeric',
+        ]);
+
+        try {
+            return DB::transaction(function () use ($request, $journal) {
+                // 1. Update the Journal
+                $journal->update([
+                    'reference' => $request->reference,
+                    'date' => $request->date,
+                    'description' => $request->description,
+                ]);
+
+                // 2. Identify which records to keep (those with IDs)
+                $incomingRecordIds = collect($request->records)->pluck('id')->filter()->toArray();
+
+                // 3. Delete records that were removed in the UI
+                $journal->records()->whereNotIn('id', $incomingRecordIds)->delete();
+
+                // 4. Update existing records or Create new ones
+                foreach ($request->records as $recordData) {
+                    $journal->records()->updateOrCreate(
+                        ['id' => $recordData['id'] ?? null], // Match by ID
+                        [
+                            'description' => $recordData['description'],
+                            'debit' => $recordData['debit'],
+                            'credit' => $recordData['credit'],
+                        ]
+                    );
+                }
+
+                // Return the journal with the refreshed records list
+                return response()->json($journal->load('records'), 200);
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to update journal and records',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

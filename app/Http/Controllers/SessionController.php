@@ -115,6 +115,35 @@ class SessionController extends Controller
         }
     }
 
+    public function start(Session $session)
+    {
+        // We only update the status and record the start time
+        $session->update([
+            'status' => 'ongoing',
+            'start' => now(),
+        ]);
+
+        if ($session) {
+            return response()->json($session, 200);
+        } else {
+            return response()->json(['message' => 'Failed to start session'], 500);
+        }
+    }
+
+    public function finish(Session $session)
+    {
+        $session->update([
+            'status' => 'completed',
+            'end' => now(),
+        ]);
+
+        if ($session) {
+            return response()->json($session, 200);
+        } else {
+            return response()->json(['message' => 'Failed to finish session'], 500);
+        }
+    }
+
     /**
      * Remove the specified resource from storage.
      */

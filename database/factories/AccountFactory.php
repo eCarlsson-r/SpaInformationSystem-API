@@ -18,6 +18,22 @@ class AccountFactory extends Factory
     {
         return [
             'name' => $this->faker->word(),
+            'category' => $this->faker->randomElement([
+                "Uang Tunai",
+                "Bank",
+                "Kartu Kredit",
+                "Piutang",
+                "Aktiva Tetap",
+                "Penyusutan",
+                "Hutang Dagang",
+                "Equity",
+                "Laba Rugi Berjalan",
+                "Laba Rugi Di Tahan",
+                "Penjualan",
+                "Pendapatan Jasa Giro",
+                "Biaya Produksi",
+                "Biaya Personalia"
+            ]),
             'type' => $this->faker->randomElement(
                 [
                     "cash",

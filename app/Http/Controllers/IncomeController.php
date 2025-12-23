@@ -75,7 +75,7 @@ class IncomeController extends Controller
      */
     public function show(Income $income)
     {
-        return $income;
+        return Income::with('items', 'payments')->findOrFail($income->id);
     }
 
     /**

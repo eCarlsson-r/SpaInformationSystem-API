@@ -20,15 +20,31 @@ class BannerController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $createData = $request->all();
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+            $path = $request->file('image')->storePubliclyAs(
+                'images', 
+                $request->file('image')->getClientOriginalName(), 
+                'public'
+            );
+            $createData['image'] = Storage::url($path);
+        }
+
+        $banner = Banner::create($createData);
+        
+        if ($banner) {
+            return response()->json($banner, 201);
+        } else {
+            return response()->json(['message' => 'Failed to create banner'], 500);
+        }
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Banner $banner)
+    public function show(String $id)
     {
-        //
+        return Banner::findOrFail($id);
     }
 
     /**
@@ -36,7 +52,22 @@ class BannerController extends Controller
      */
     public function update(Request $request, Banner $banner)
     {
-        //
+        $updateData = $request->all();
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+            $path = $request->file('image')->storePubliclyAs(
+                'images', 
+                $request->file('image')->getClientOriginalName(), 
+                'public'
+            );
+
+            $updateData['image'] = Storage::url($path);
+        }
+
+        if ($banner->update($updateData)) {
+            return response()->json($banner, 200);
+        } else {
+            return response()->json(['message' => 'Failed to update banner'], 500);
+        }
     }
 
     /**
@@ -44,6 +75,10 @@ class BannerController extends Controller
      */
     public function destroy(Banner $banner)
     {
-        //
+        if ($banner->delete()) {
+            return response()->json(['message' => 'Banner deleted successfully'], 200);
+        } else {
+            return response()->json(['message' => 'Failed to delete banner'], 500);
+        }
     }
 }

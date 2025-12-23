@@ -9,7 +9,6 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BankController;
 use App\Http\Controllers\BannerController;
-use App\Http\Controllers\BedController;
 use App\Http\Controllers\BonusController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CategoryController;
@@ -49,6 +48,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/daily', [DashboardController::class, 'daily']);
     Route::get('account/lookup', [AccountController::class, 'lookup']);
     Route::post('/files', [AuthController::class, 'upload']);
+Route::post('/session/{session}/start', [SessionController::class, 'start']);
+Route::post('/session/{session}/finish', [SessionController::class, 'finish']);
 
     Route::apiResource('journal', JournalController::class);
     Route::apiResource('journalrecord', JournalRecordController::class);
@@ -68,7 +69,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('agent', AgentController::class);
     Route::apiResource('bank', BankController::class);
     Route::apiResource('room', RoomController::class);
-    Route::apiResource('bed', BedController::class);
     Route::apiResource('branch', BranchController::class);
     Route::apiResource('customer', CustomerController::class);
     Route::apiResource('employee', EmployeeController::class);

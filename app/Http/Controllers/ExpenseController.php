@@ -75,7 +75,7 @@ class ExpenseController extends Controller
      */
     public function show(string $id)
     {
-        return Expense::findOrFail($id);
+        return Expense::with('items', 'payments')->findOrFail($id);
     }
 
     /**
