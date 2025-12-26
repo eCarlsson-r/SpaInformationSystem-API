@@ -25,10 +25,10 @@ use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\IncomeItemController;
 use App\Http\Controllers\IncomePaymentController;
 use App\Http\Controllers\JournalController;
-use App\Http\Controllers\JournalRecordController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\SessionController;
+use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TransferController;
 use App\Http\Controllers\TreatmentController;
@@ -48,11 +48,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/daily', [DashboardController::class, 'daily']);
     Route::get('account/lookup', [AccountController::class, 'lookup']);
     Route::post('/files', [AuthController::class, 'upload']);
+    Route::post('/attendance/sync', [AttendanceController::class, 'sync']);
+    Route::get('/attendance/sync-status', [AttendanceController::class, 'getSyncStatus']);
+
+    Route::apiResource('session', SessionController::class);
     Route::post('/session/{session}/start', [SessionController::class, 'start']);
     Route::post('/session/{session}/finish', [SessionController::class, 'finish']);
 
     Route::apiResource('journal', JournalController::class);
-    Route::apiResource('journalrecord', JournalRecordController::class);
     Route::apiResource('income', IncomeController::class);
     Route::apiResource('incomeitem', IncomeItemController::class);
     Route::apiResource('incomepayment', IncomePaymentController::class);
@@ -62,6 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('transfer', TransferController::class); 
     Route::apiResource('attendance', AttendanceController::class); 
     Route::apiResource('period', PeriodController::class);
+    Route::apiResource('shift', ShiftController::class);
     Route::apiResource('compensation', CompensationController::class);
     Route::apiResource('account', AccountController::class);
     Route::apiResource('wallet', WalletController::class);
@@ -78,7 +82,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('supplier', SupplierController::class); 
     Route::apiResource('voucher', VoucherController::class); 
     Route::apiResource('walkin', WalkinController::class); 
-    Route::apiResource('session', SessionController::class);
     Route::apiResource('sales', SalesController::class);
     Route::apiResource('banner', BannerController::class);
 });

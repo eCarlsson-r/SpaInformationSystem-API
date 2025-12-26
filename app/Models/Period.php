@@ -19,6 +19,8 @@ class Period extends Model
         'id'
     ];
 
+    protected $appends = ['label'];
+
     public function expense()
     {
         return $this->belongsTo(Expense::class);
@@ -27,5 +29,10 @@ class Period extends Model
     public function compensations()
     {
         return $this->hasMany(Compensation::class);
+    }
+
+    public function getLabelAttribute()
+    {
+        return $this->start . " - " . $this->end;
     }
 }

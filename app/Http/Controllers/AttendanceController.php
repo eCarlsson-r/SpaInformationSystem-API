@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance; 
+use App\Services\AttendanceSyncService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Employee;
@@ -148,5 +149,18 @@ class AttendanceController extends Controller
     public function destroy(Attendance $attendance)
     {
         //
+    }
+
+    public function sync(Request $request)
+    {
+        $service = new AttendanceSyncService();
+        $service->syncAttendance();
+        return response()->json(['message' => 'Attendance synced successfully'], 200);
+    }
+
+    public function getSyncStatus()
+    {
+        $service = new AttendanceSyncService();
+        return response()->json($service->getSyncStatus());
     }
 }

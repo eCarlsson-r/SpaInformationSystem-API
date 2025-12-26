@@ -12,7 +12,7 @@ class PeriodController extends Controller
      */
     public function index()
     {
-        return Period::all();
+        return Period::orderBy("id", "desc")->get();
     }
 
     /**
@@ -20,7 +20,16 @@ class PeriodController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $period = Period::create([
+            "start" => $request->start,
+            "end" => $request->end
+        ]);
+        
+        if ($period) {
+            return response()->json($period, 201);
+        } else {
+            return response()->json(['message' => 'Failed to create period'], 500);
+        }
     }
 
     /**
@@ -36,17 +45,7 @@ class PeriodController extends Controller
      */
     public function update(Request $request)
     {
-        $period = Period::create([
-            "id" => $request->id,
-            "start" => $request->start,
-            "end" => $request->end
-        ]);
         
-        if ($period) {
-            return response()->json($period, 201);
-        } else {
-            return response()->json(['message' => 'Failed to create period'], 500);
-        }
     }
 
     /**
