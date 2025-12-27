@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('banners', function (Blueprint $table) {
             $table->integer('id', true);
             $table->string('image', 100);
-            $table->string('intro_key', 100);
-            $table->string('title_key', 100);
-            $table->string('subtitle_key', 100);
-            $table->string('description_key', 100);
-            $table->string('action_key', 100);
+            $table->string('introduction', 100);
+            $table->string('title', 100);
+            $table->string('subtitle', 100);
+            $table->string('description', 100);
+            $table->string('action', 100);
             $table->string('action_page', 100);
         });
     }

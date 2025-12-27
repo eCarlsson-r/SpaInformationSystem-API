@@ -15,15 +15,13 @@ class CompensationController extends Controller
     {
         $compensation = Compensation::with('employee')->where('period_id', $request->input('period_id'))->get();
         
-        \Illuminate\Support\Facades\Log::info('Compensation Query Params:', $request->all());
-        
         if ($compensation->isNotEmpty()) {
             return response()->json($compensation, 200);
         } else if ($request->start && $request->end && $request->has('employees')) {
             // [NEW] Check if we want a specific report for specific employees
             $service = new CompensationService($request->start, $request->end);
             // Automatically determine report type (Voucher for Cashier, Session for Therapist)
-            return response()->json($service->calculateDetailedBonuses(explode(",", $request->employees)));
+            return response()->json($service->calculateDetailedBonuses(json_decode($request->employees)));
         }
         else if ($request->start && $request->end) {
             // Calculate compensation on-the-fly if not stored yet

@@ -12,11 +12,11 @@ class Banner extends Model
     protected $fillable = [
         'name',
         'image',
-        'intro_key',
-        'title_key',
-        'subtitle_key',
-        'description_key',
-        'action_key',
+        'introduction',
+        'title',
+        'subtitle',
+        'description',
+        'action',
         'action_page',
     ];
 

@@ -195,9 +195,9 @@ class CompensationService
         foreach ($employees as $emp) {
             $grade = $emp->grade->first()?->grade;
             if ($grade === 'K') {
-                $cashierIds[] = $emp->id;
+                array_push($cashierIds, $emp->id);
             } else {
-                $therapistIds[] = $emp->id;
+                array_push($therapistIds, $emp->id);
             }
         }
 
