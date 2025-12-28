@@ -177,11 +177,11 @@ class DashboardController extends Controller
             "voucher_improve" => 0,
             "monthly_income" => IncomePayment::join('incomes', 'income_payments.income_id', '=', 'incomes.id')
                 ->whereYear('incomes.date', $profit_year)
-                ->selectRaw('MONTH(incomes.date) as month, SUM(income_payments.amount) as amount')
+                ->selectRaw('MONTH(incomes.date) as month, SUM(income_payments.amount) as income')
                 ->groupBy('month')->get(),
             "monthly_expense" => ExpensePayment::join('expenses', 'expense_payments.expense_id', '=', 'expenses.id')
                 ->whereNotLike('expense_payments.description', 'Profit%')->whereYear('expenses.date', $profit_year)
-                ->selectRaw('MONTH(expenses.date) as month, SUM(expense_payments.amount) as amount')
+                ->selectRaw('MONTH(expenses.date) as month, SUM(expense_payments.amount) as expense')
                 ->groupBy('month')->get()
         );
 

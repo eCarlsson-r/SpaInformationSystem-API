@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Compensation;
 use App\Services\CompensationService;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class CompensationController extends Controller
 {
@@ -13,10 +14,11 @@ class CompensationController extends Controller
      */
     public function index(Request $request)
     {
-        $compensation = Compensation::with('employee')->where('period_id', $request->input('period_id'))->get();
-        
-        if ($compensation->isNotEmpty()) {
-            return response()->json($compensation, 200);
+        if ($request->start && $request->end && $request->has('employee_id')) {
+            // [NEW] Check if we want a specific report for specific employees
+            $service = new CompensationService(Carbon::parse($request->start)->toDateString(), Carbon::parse($request->end)->toDateString());
+            // Automatically determine report type (Voucher for Cashier, Session for Therapist)
+            return response()->json($service->calculateDetailedBonuses([$request->employee_id]));
         } else if ($request->start && $request->end && $request->has('employees')) {
             // [NEW] Check if we want a specific report for specific employees
             $service = new CompensationService($request->start, $request->end);
@@ -33,7 +35,7 @@ class CompensationController extends Controller
         }
     }
 
-    /**
+    /** 
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
@@ -63,9 +65,15 @@ class CompensationController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show()
+    public function show(Request $request, String $id)
     {
-        //
+        $compensation = Compensation::with('employee')->where('period_id', $id)->get();
+        
+        if ($compensation->isNotEmpty()) {
+            return response()->json($compensation, 200);
+        } else {
+            return response()->json([], 200);
+        }
     }
 
     /**

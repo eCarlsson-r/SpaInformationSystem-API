@@ -18,8 +18,8 @@ class AttendanceController extends Controller
     public function index(Request $request)
     {
         $employee = $request->employee_id;
-        $start_date = $request->start_date;
-        $end_date = $request->end_date;
+        $start_date = Carbon::parse($request->start_date)->toDateString();
+        $end_date = Carbon::parse($request->end_date)->toDateString();
 
         if (isset($employee)) {
             $attendance = Attendance::with('employee')

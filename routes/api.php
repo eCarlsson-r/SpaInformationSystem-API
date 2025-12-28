@@ -85,3 +85,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('sales', SalesController::class);
     Route::apiResource('banner', BannerController::class);
 });
+
+Route::get('/banner', [BannerController::class, 'index']);
+Route::get('/treatment', [TreatmentController::class, 'index']);
+Route::get('/category', [CategoryController::class, 'index']);

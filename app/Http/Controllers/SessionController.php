@@ -7,6 +7,7 @@ use App\Models\Journal;
 use App\Models\Walkin;
 use App\Models\Voucher;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class SessionController extends Controller
 {
@@ -37,9 +38,17 @@ class SessionController extends Controller
             );
         
         if ($request->input('branch_id')) {
-            return $sessions->where('branch_id', $request->input('branch_id'))->get();
+            return $sessions->where('sessions.branch_id', $request->input('branch_id'))->get();
         } else if ($request->input('employee_id')) {
-            return $sessions->where('employee_id', $request->input('employee_id'))->get();
+            return $sessions->where('sessions.employee_id', $request->input('employee_id'))->get();
+        } else if ($request->input("start") && $request->input("end") && $request->input("from_employee") && $request->input("to_employee") && $request->input("order_by")) {
+            return $sessions->whereBetween('sessions.date', [
+                Carbon::parse($request->input("start"))->toDateString(), 
+                Carbon::parse($request->input("end"))->toDateString()
+            ])
+                ->whereBetween('sessions.employee_id', [$request->input("from_employee"), $request->input("to_employee")])
+                ->orderBy($request->input("order_by"))
+                ->get();
         } else {
             return $sessions->get();
         }
