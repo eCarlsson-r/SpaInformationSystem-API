@@ -6,15 +6,47 @@ use App\Models\Expense;
 use App\Models\Journal;
 use App\Models\Wallet;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class ExpenseController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return Expense::all();
+        if ($request->start && $request->end && $request->account) {
+            return Expense::query()
+                ->join('expense_payments', 'expenses.id', '=', 'expense_payments.expense_id')
+                ->join('expense_items', 'expenses.id', '=', 'expense_items.expense_id')
+                ->join('wallets', 'expense_payments.wallet_id', '=', 'wallets.id')
+                ->leftJoin('customers', function ($join) {
+                    $join->on('expenses.partner', '=', 'customers.id')
+                        ->where('expenses.partner_type', '=', 'customer');
+                })
+                ->leftJoin('agents', function ($join) {
+                    $join->on('expenses.partner', '=', 'agents.id')
+                        ->where('expenses.partner_type', '=', 'agent');
+                })
+                ->leftJoin('bank', function ($join) {
+                    $join->on('expenses.partner', '=', 'bank.id')
+                        ->where('expenses.partner_type', '=', 'bank');
+                })
+                ->leftJoin('suppliers', function ($join) {
+                    $join->on('expenses.partner', '=', 'suppliers.id')
+                        ->where('expenses.partner_type', '=', 'supplier');
+                })
+                ->where('expense_payments.wallet_id', $request->account)
+                ->whereBetween('expenses.date', [Carbon::parse($request->start), Carbon::parse($request->end)])
+                ->groupBy('expenses.id', 'expenses.date', 'expenses.journal_reference', 'expenses.partner_type', 'customers.name', 'agents.name', 'bank.name', 'suppliers.name', 'expenses.description', 'expense_payments.type', 'expense_payments.description', 'wallets.name')
+                ->selectRaw("
+                    expenses.date,  expenses.journal_reference, expenses.description,
+                    IF(expenses.partner_type = 'customer', customers.name, IF(expenses.partner_type = 'agent', agents.name, IF(expenses.partner_type = 'bank', bank.name, IF(expenses.partner_type = 'supplier', suppliers.name, '')))) as `partner`,
+                    SUM(expense_items.amount) as `amount`
+                ")->get();
+        } else {
+            return Expense::all();
+        }
     }
 
     /**

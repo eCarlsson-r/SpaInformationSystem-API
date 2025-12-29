@@ -5,20 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\Sales;
 use App\Models\Branch;
 use App\Models\Income;
+use App\Models\IncomePayment;
 use App\Models\Journal;
 use App\Models\Voucher;
 use App\Models\Walkin;
 use App\Models\Wallet;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class SalesController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return Sales::all();
+        return Sales::with('customer', 'records', 'income', 'income.payments')->whereBetween('date', [Carbon::parse($request->start), Carbon::parse($request->end)])
+            ->where('branch_id', $request->branch)->get();
     }
 
     /**

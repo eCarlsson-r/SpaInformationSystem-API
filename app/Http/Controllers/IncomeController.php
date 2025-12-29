@@ -6,15 +6,57 @@ use App\Models\Income;
 use App\Models\Journal;
 use App\Models\Wallet;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class IncomeController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return Income::all();
+        if ($request->variant && $request->start && $request->end && $request->account) {
+            $query = Income::query()
+                ->join('income_payments', 'incomes.id', '=', 'income_payments.income_id')
+                ->join('income_items', 'incomes.id', '=', 'income_items.income_id')
+                ->join('wallets', 'income_payments.wallet_id', '=', 'wallets.id')
+                ->leftJoin('customers', function ($join) {
+                    $join->on('incomes.partner', '=', 'customers.id')
+                        ->where('incomes.partner_type', '=', 'customer');
+                })
+                ->leftJoin('agents', function ($join) {
+                    $join->on('incomes.partner', '=', 'agents.id')
+                        ->where('incomes.partner_type', '=', 'agent');
+                })
+                ->where('income_payments.wallet_id', $request->account)
+                ->whereBetween('incomes.date', [Carbon::parse($request->start), Carbon::parse($request->end)])
+                ->groupBy('incomes.id', 'incomes.date', 'incomes.journal_reference', 'incomes.partner_type', 'customers.name', 'agents.name', 'incomes.description', 'income_payments.type', 'income_payments.description', 'wallets.name');
+
+            if ($request->variant == 1) {
+                return $query->selectRaw("
+                        incomes.date,  incomes.journal_reference, incomes.description,
+                        IF(incomes.partner_type = 'customer', customers.name, IF(incomes.partner_type = 'agent', agents.name, '')) as `partner`,
+                        SUM(income_items.amount) as `amount`
+                    ")
+                    ->get();
+            } else if ($request->variant == 2) {
+                return $query->selectRaw("
+                        incomes.date, incomes.journal_reference, incomes.description,
+                        IF(incomes.partner_type = 'customer', customers.name, IF(incomes.partner_type = 'agent', agents.name, '')) as `partner`,
+                        income_payments.type as `pay_type`,
+                        IF(income_payments.description NOT LIKE 'Kartu%',
+                            CONCAT(IF(income_payments.description LIKE 'Voucher%', 'Voucher ', 'eWallet '), IF(income_payments.description LIKE 'Voucher%', SUBSTRING_INDEX(wallets.name, ' ', -1), SUBSTRING_INDEX(income_payments.description, ' ', 1)), ' [', SUBSTRING_INDEX(income_payments.description, ' ', -1), ']'),
+                            CONCAT(IF(income_payments.description LIKE 'Kartu debit%', 'Kartu Debit', 'Kartu Kredit'), ' [', RIGHT(SUBSTRING_INDEX(income_payments.description, ' ', -1), 4), ']')
+                        ) as `pay_tool`,
+                        SUM(income_items.amount) as `amount`
+                    ")
+                    ->get();
+            } else {
+                return response()->json(['message' => 'Please select report variant.'], 500);
+            }
+        } else {
+            return Income::all();
+        }
     }
 
     /**
