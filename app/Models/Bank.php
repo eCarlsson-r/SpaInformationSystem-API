@@ -19,4 +19,10 @@ class Bank extends Model
     protected $guarded = [
         'id'
     ];
+
+    protected static function booted()
+    {
+        static::saved(fn () => event(new \App\Events\EntityUpdated('banks')));
+        static::deleted(fn () => event(new \App\Events\EntityUpdated('banks')));
+    }
 }

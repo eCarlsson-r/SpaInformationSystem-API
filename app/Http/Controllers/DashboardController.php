@@ -117,14 +117,8 @@ class DashboardController extends Controller
             })
             ->join('treatments', 'bonus.treatment_id', '=', 'treatments.id')
             ->whereYear('sessions.date', $profit_year)
-            ->select('sessions.*', 'bonus.gross_bonus')
-            ->get()
-            ->groupBy(function($session) {
-                return date('m', strtotime($session->date));
-            })
-            ->map(function ($monthSessions) {
-                return $monthSessions->sum('gross_bonus');
-            });
+            ->selectRaw('MONTH(sessions.date) as month, SUM(bonus.gross_bonus) as income')
+            ->groupBy('month')->get();
 
         $metadata["monthly_commision"] = $monthly_commision;
 
@@ -144,11 +138,11 @@ class DashboardController extends Controller
                 // Group by month (e.g., "01", "02")
                 return date('m', strtotime($attendance->date));
             })
-            ->map(function ($monthAttendances) {
-                return $monthAttendances->sum('deduction');
+            ->map(function ($monthAttendances, $key) {
+                return (object)array("month"=>intval($key), "expense"=>$monthAttendances->sum('deduction'));
             });
 
-        $metadata["monthly_attendance"] = $monthly_attendance;
+        $metadata["monthly_attendance"] = $monthly_attendance->flatten(1)->toArray();
 
         return $metadata;
     }
@@ -289,8 +283,8 @@ class DashboardController extends Controller
 
     public function dashboard(Request $request)
     {
-        $employee = $request->input("employee");
-        $branch = $request->input("branch");
+        $employee = $request->input("employee_id");
+        $branch = $request->input("branch_id");
         $profit_year = $request->input("profit_year");
         
         $date = ($request->input("job_date")) ? $request->input("job_date") : date('Y-m-d');

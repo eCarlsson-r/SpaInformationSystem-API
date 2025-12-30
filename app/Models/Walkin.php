@@ -21,6 +21,13 @@ class Walkin extends Model
         'id'
     ];
 
+    // app/Models/Treatment.php
+    protected static function booted()
+    {
+        static::saved(fn () => event(new \App\Events\EntityUpdated('walkins')));
+        static::deleted(fn () => event(new \App\Events\EntityUpdated('walkins')));
+    }
+
     public function treatment()
     {
         return $this->belongsTo(Treatment::class);

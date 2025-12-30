@@ -21,6 +21,12 @@ class Period extends Model
 
     protected $appends = ['label'];
 
+    protected static function booted()
+    {
+        static::saved(fn () => event(new \App\Events\EntityUpdated('periods')));
+        static::deleted(fn () => event(new \App\Events\EntityUpdated('periods')));
+    }
+
     public function expense()
     {
         return $this->belongsTo(Expense::class);

@@ -22,7 +22,7 @@ class TreatmentControllerTest extends TestCase
     {
         $treatments = Treatment::factory()->count(3)->create();
 
-        $response = $this->getJson(route('treatment.index'));
+        $response = $this->getJson('/api/treatment');
 
         $response->assertStatus(200)
             ->assertJsonCount(3);

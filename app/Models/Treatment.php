@@ -34,6 +34,12 @@ class Treatment extends Model
         'id'
     ];
 
+    protected static function booted()
+    {
+        static::saved(fn () => event(new \App\Events\EntityUpdated('treatments')));
+        static::deleted(fn () => event(new \App\Events\EntityUpdated('treatments')));
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id');

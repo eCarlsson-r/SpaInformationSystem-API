@@ -3,16 +3,51 @@
 namespace App\Http\Controllers;
 
 use App\Models\Account;
+use App\Models\JournalRecord;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class AccountController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return Account::all();
+        if ($request->has("start") && $request->has("end")) {
+            $startDate = Carbon::parse($request->input("start"))->toDateString();
+            $endDate = Carbon::parse($request->input("end"))->toDateString();
+
+            $types = ['income', 'cost-of-sales', 'adm-expenses', 'other-expenses', 'other-income', 'tax'];
+
+            return Account::query()
+                ->join('journal_records', 'accounts.id', '=', 'journal_records.account_id')
+                ->join('journals', 'journal_records.journal_id', '=', 'journals.id')
+                ->whereIn('accounts.type', $types)
+                ->selectRaw('
+                    accounts.id, accounts.name, accounts.category, accounts.type,
+                    ABS(SUM(CASE WHEN journals.date BETWEEN ? AND ? THEN (journal_records.debit - journal_records.credit) ELSE 0 END)) as `current`,
+                    ABS(SUM(journal_records.debit - journal_records.credit)) as `previous`
+                ', [$startDate, $endDate])
+                ->groupBy('accounts.id', 'accounts.name', 'accounts.type')
+                ->orderBy('accounts.id', 'ASC')
+                ->get();
+        } else if ($request->has("end")) {
+            $endDate = Carbon::parse($request->input("end"))->toDateString();
+
+            return Account::join('journal_records', 'accounts.id', '=', 'journal_records.account_id')
+                ->join('journals', 'journal_records.journal_id', '=', 'journals.id')
+                ->where('journals.date', '<=', $endDate)
+                ->selectRaw('
+                    accounts.id, accounts.name, accounts.type, accounts.category,
+                    SUM(journal_records.debit - journal_records.credit) as balance
+                ')
+                ->groupBy('accounts.id', 'accounts.name', 'accounts.type')
+                ->orderBy('accounts.id', 'ASC')
+                ->get();
+        } else {
+            return Account::all();
+        }
     }
 
     public function lookup(Request $request) {
@@ -43,9 +78,53 @@ class AccountController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
-        return Account::findOrFail($id);
+        if ($request->has("start") && $request->has("end")) {
+            $startDate = Carbon::parse($request->input("start"))->toDateString();
+            $endDate = Carbon::parse($request->input("end"))->toDateString();
+
+            // 1. Saldo AWAL (Beginning Balance)
+            $saldoAwal = JournalRecord::join('journals', 'journal_records.journal_id', '=', 'journals.id')
+                ->where('journal_records.account_id', $id)
+                ->where('journals.date', '<', $startDate)
+                ->selectRaw("
+                    '' as date, 
+                    '' as `ref-no`, 
+                    'SALDO AWAL' as description, 
+                    COALESCE(SUM(debit), 0) as debit, 
+                    COALESCE(SUM(credit), 0) as credit, 
+                    0 as OrderNum
+                ")
+                ->get();
+
+            // 2. Ledger Entries with specific OrderNum categorization
+            $entries = JournalRecord::join('journals', 'journal_records.journal_id', '=', 'journals.id')
+                ->where('journal_records.account_id', $id)
+                ->whereBetween('journals.date', [$startDate, $endDate])
+                ->selectRaw("
+                    journals.date, 
+                    journals.reference, 
+                    journal_records.description, 
+                    journal_records.debit, 
+                    journal_records.credit,
+                    CASE 
+                        WHEN journals.reference LIKE 'EXO.BKM%' THEN 1
+                        WHEN journals.reference LIKE 'EXO.BKK%' THEN 2
+                        WHEN journals.reference LIKE 'EXO.BPB%' THEN 3
+                        WHEN journals.reference LIKE 'TS%' THEN 4
+                        ELSE 5
+                    END as OrderNum
+                ")
+                ->orderBy('journals.date')
+                ->orderBy('OrderNum')
+                ->orderBy('journals.reference')
+                ->get();
+
+            return $saldoAwal->concat($entries);
+        } else {
+            return Account::findOrFail($id);
+        }
     }
 
     /**

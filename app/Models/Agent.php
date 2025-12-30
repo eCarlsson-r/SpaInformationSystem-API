@@ -27,6 +27,12 @@ class Agent extends Model
         'id'
     ];
 
+    protected static function booted()
+    {
+        static::saved(fn () => event(new \App\Events\EntityUpdated('agents')));
+        static::deleted(fn () => event(new \App\Events\EntityUpdated('agents')));
+    }
+
     public function liability()
     {
         return $this->hasOne(Account::class, 'liability_account');

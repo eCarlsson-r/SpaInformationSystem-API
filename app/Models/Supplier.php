@@ -24,4 +24,10 @@ class Supplier extends Model
     protected $guarded = [
         'id'
     ];
+
+    protected static function booted()
+    {
+        static::saved(fn () => event(new \App\Events\EntityUpdated('suppliers')));
+        static::deleted(fn () => event(new \App\Events\EntityUpdated('suppliers')));
+    }
 }

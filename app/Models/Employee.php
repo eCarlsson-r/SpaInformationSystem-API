@@ -41,9 +41,15 @@ class Employee extends Model
         'id'
     ];
 
+    protected static function booted()
+    {
+        static::saved(fn () => event(new \App\Events\EntityUpdated('employees')));
+        static::deleted(fn () => event(new \App\Events\EntityUpdated('employees')));
+    }
+
     public function user()
     {
-        return $this->hasOne(User::class, 'user_id');
+        return $this->belongsTo(User::class);
     }
 
     public function branch()

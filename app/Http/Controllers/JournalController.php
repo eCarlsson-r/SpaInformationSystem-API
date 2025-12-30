@@ -4,15 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Models\Journal;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class JournalController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return Journal::all();
+        if ($request->has("start") && $request->has("end") && $request->has("account")) {
+            $startDate = Carbon::parse($request->input("start"))->toDateString();
+            $endDate = Carbon::parse($request->input("end"))->toDateString();
+
+            return Journal::join('journal_records', 'journals.id', '=', 'journal_records.journal_id')
+                ->whereBetween('journals.date', [$startDate, $endDate])
+                ->where("journal_records.account_id", $request->input("account"))
+                ->selectRaw('SUM(journal_records.debit - journal_records.credit) AS `earning`')
+                ->orderBy('journals.date')
+                ->get();
+        } else {
+            return Journal::all();
+        }
     }
 
     /**

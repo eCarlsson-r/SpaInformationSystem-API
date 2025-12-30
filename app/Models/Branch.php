@@ -35,6 +35,12 @@ class Branch extends Model
         'id'
     ];
 
+    protected static function booted()
+    {
+        static::saved(fn () => event(new \App\Events\EntityUpdated('branches')));
+        static::deleted(fn () => event(new \App\Events\EntityUpdated('branches')));
+    }
+
     public function room()
     {
         return $this->hasMany(Room::class);

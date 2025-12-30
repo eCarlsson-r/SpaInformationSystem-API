@@ -22,6 +22,13 @@ class Wallet extends Model
         'id'
     ];
 
+    // app/Models/Treatment.php
+    protected static function booted()
+    {
+        static::saved(fn () => event(new \App\Events\EntityUpdated('wallets')));
+        static::deleted(fn () => event(new \App\Events\EntityUpdated('wallets')));
+    }
+
     public function bank()
     {
         return $this->belongsTo(Bank::class);

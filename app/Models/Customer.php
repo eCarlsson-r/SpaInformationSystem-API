@@ -27,6 +27,13 @@ class Customer extends Model
         'id'
     ];
 
+    // app/Models/Treatment.php
+    protected static function booted()
+    {
+        static::saved(fn () => event(new \App\Events\EntityUpdated('customers')));
+        static::deleted(fn () => event(new \App\Events\EntityUpdated('customers')));
+    }
+
     public function liability()
     {
         return $this->hasOne(Account::class, 'liability_account');

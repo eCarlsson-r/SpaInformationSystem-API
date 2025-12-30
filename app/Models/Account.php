@@ -20,6 +20,12 @@ class Account extends Model
         'id'
     ];
 
+    protected static function booted()
+    {
+        static::saved(fn () => event(new \App\Events\EntityUpdated('accounts')));
+        static::deleted(fn () => event(new \App\Events\EntityUpdated('accounts')));
+    }
+
     public function discounts()
     {
         return $this->hasMany(Discount::class);

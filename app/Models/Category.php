@@ -26,6 +26,13 @@ class Category extends Model
         'id'
     ];
 
+    // app/Models/Treatment.php
+    protected static function booted()
+    {
+        static::saved(fn () => event(new \App\Events\EntityUpdated('categories')));
+        static::deleted(fn () => event(new \App\Events\EntityUpdated('categories')));
+    }
+
     public function treatment()
     {
         return $this->hasMany(Treatment::class, 'category_id');

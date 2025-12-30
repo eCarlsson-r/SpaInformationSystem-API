@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Voucher;
 use App\Models\Treatment;
+use App\Models\Session;
+use App\Models\SalesRecord;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class VoucherController extends Controller
 {
@@ -15,6 +18,172 @@ class VoucherController extends Controller
     {
         if ($request->input("treatment")) {
             return Voucher::where("treatment_id", $request->input("treatment"))->where("id", "LIKE", $request->input("treatment")."%")->orderBy("id", "desc")->first();
+        } else if ($request->input("variant") && $request->input("end") && $request->input("metric")) {
+            if ($request->input("variant") == "QTY") {
+                $metrics = json_decode($request->input("metric"));
+                $in_stock = in_array("in-stock", $metrics);
+                $sold_out = in_array("sold-out", $metrics);
+
+                $vouchersQuery = Voucher::with('customer')->orderBy('id');
+
+                if ($in_stock && !$sold_out) {
+                    $vouchersQuery->whereNull('customer_id');
+                } else if (!$in_stock && $sold_out) {
+                    $vouchersQuery->whereNotNull('customer_id');
+                }
+
+                $allVouchers = $vouchersQuery->where('register_date', '<=', Carbon::parse($request->input("end"))->format('Y-m-d'))->get();
+
+                return $allVouchers->groupBy('treatment_id')->map(function ($group, $treatmentId) use ($in_stock, $sold_out) {
+                    $treatment = Treatment::find($treatmentId);
+                    $name = $treatment ? $treatment->name : $treatmentId;
+
+                    $chunked = collect();
+                    if ($in_stock && !$sold_out) {
+                        // Use treatment's voucher_normal_quantity for book grouping
+                        $chunked = $group->chunk($treatment->voucher_normal_quantity);
+                    } else {
+                        // Group by customer for Sold Out or Combined reports
+                        $chunked = $group->chunkWhile(fn($v, $k, $c) => $v->customer_id === $c->last()->customer_id);
+                    }
+
+                    $voucherList = $chunked->map(fn($chunk) => [
+                        'name' => $name,
+                        'range' => $chunk->count() > 1 ? "{$chunk->first()->id} s/d {$chunk->last()->id}" : $chunk->first()->id,
+                        'count' => $chunk->count(),
+                        'customer-name' => $chunk->first()->customer_id ? $chunk->first()->customer->name : 'IN STOCK'
+                    ])->values();
+
+                    return [
+                        "name" => $name,
+                        "voucher" => $voucherList
+                    ];
+                })->values();
+
+            } else if ($request->input("variant") == "REKAP_TANGGAL_PENJUALAN") {
+                return Voucher::join('sales', 'voucher.sales_id', '=', 'sales.id')
+                    ->selectRaw('treatment_id, MONTH(sales.date) as month, YEAR(sales.date) as year, COUNT(*) as count, SUM(voucher.amount) as amount')
+                    ->groupBy('treatment_id', 'year', 'month')
+                    ->get()
+                    ->groupBy('treatment_id')
+                    ->map(function ($sales, $treatmentId) {
+                        $treatment = Treatment::find($treatmentId);
+                        return [
+                            'name' => $treatment ? $treatment->name : $treatmentId,
+                            'sales' => $sales->map(fn($item) => [
+                                'name' => $treatment ? $treatment->name : $treatmentId,
+                                'month' => $item->month,
+                                'year' => $item->year,
+                                'count' => $item->count,
+                                'amount' => $item->amount,
+                            ])->values()
+                        ];
+                    })->values();
+            }
+        } else if ($request->input("variant") == "voucher-sales") {
+            $fromDate = Carbon::parse($request->input("start"))->format("Y-m-d");
+            $toDate = Carbon::parse($request->input("end"))->format("Y-m-d");
+            return Voucher::join("sales_records", "voucher.sales_id", "=", "sales_records.sales_id")
+                ->join("sales", "sales_records.sales_id", "=", "sales.id")
+                ->join("incomes", "sales.income_id", "=", "incomes.id")
+                ->join("treatments", "voucher.treatment_id", "=", "treatments.id")
+                ->join("branches", "sales.branch_id", "=", "branches.id")
+                ->join("customers", "sales.customer_id", "=", "customers.id")
+                ->selectRaw(
+                    "sales.date, incomes.journal_reference, 
+                    CONCAT(treatments.name,'\n',voucher_start,' s/d ',voucher_end) AS description, 
+                    COUNT(voucher.id) AS quantity,  sales_records.price, 
+                    ROUND((COUNT(voucher.id)*sales_records.price)/1000)*1000 AS total"
+                )->whereRaw("sales.date BETWEEN '$fromDate' AND '$toDate'")
+                ->groupBy(
+                    "sales.id", 
+                    "sales.date", 
+                    "incomes.journal_reference", 
+                    "treatments.name", 
+                    "voucher_start", 
+                    "voucher_end", 
+                    "sales_records.price"
+                )
+                ->orderBy("journal_reference")
+                ->get();
+        } else if ($request->input("variant") == "sales-by-date" || $request->input("variant") == "sales-by-treatment") {
+            $fromDate = Carbon::parse($request->input("start"))->toDateString();
+            $toDate = Carbon::parse($request->input("end"))->toDateString();
+            $isByTreatment = $request->input("variant") == "sales-by-treatment";
+
+            $salesQuery = SalesRecord::join('sales', 'sales_records.sales_id', '=', 'sales.id')
+                ->join('treatments', 'sales_records.treatment_id', '=', 'treatments.id')
+                ->whereBetween('sales.date', [$fromDate, $toDate])
+                ->selectRaw("
+                    " . ($isByTreatment ? "" : "sales.date,") . "
+                    treatments.name as treatment,
+                    sales_records.treatment_id,
+                    SUM(IF(redeem_type='voucher', quantity, 0)) as voucher_quantity,
+                    SUM(IF(redeem_type='voucher', total_price, 0)) as voucher_price,
+                    SUM(IF(redeem_type='walkin', quantity, 0)) as walkin_quantity,
+                    SUM(IF(redeem_type='walkin', total_price, 0)) as walkin_price,
+                    SUM(quantity) as total_quantity,
+                    SUM(total_price) as total_price
+                ");
+
+            if ($isByTreatment) {
+                $salesQuery->groupBy('sales_records.treatment_id', 'treatments.name');
+            } else {
+                $salesQuery->groupBy('sales.date', 'sales_records.treatment_id', 'treatments.name');
+            }
+            $sales = $salesQuery->get();
+
+            $usageQuery = Session::join('treatments', 'sessions.treatment_id', '=', 'treatments.id')
+                ->whereBetween('sessions.date', [$fromDate, $toDate])
+                ->selectRaw("
+                    " . ($isByTreatment ? "" : "sessions.date,") . "
+                    sessions.treatment_id,
+                    SUM(IF(payment='voucher', 1, 0)) as voucher_usage
+                ");
+
+            if ($isByTreatment) {
+                $usageQuery->groupBy('sessions.treatment_id');
+            } else {
+                $usageQuery->groupBy('sessions.date', 'sessions.treatment_id');
+            }
+            $usages = $usageQuery->get();
+
+            $results = collect();
+            
+            // Map sales
+            foreach ($sales as $sale) {
+                $key = $isByTreatment ? $sale->treatment_id : $sale->date . '_' . $sale->treatment_id;
+                $data = $sale->toArray();
+                $data['voucher_usage'] = 0; // Initialize
+                $results->put($key, $data);
+            }
+
+            // Map usages
+            foreach ($usages as $usage) {
+                $key = $isByTreatment ? $usage->treatment_id : $usage->date . '_' . $usage->treatment_id;
+                if ($results->has($key)) {
+                    $item = $results->get($key);
+                    $item['voucher_usage'] = $usage->voucher_usage;
+                    $results->put($key, $item);
+                } else {
+                    $treatment = Treatment::find($usage->treatment_id);
+                    $item = [
+                        'date' => $isByTreatment ? null : $usage->date,
+                        'treatment' => $treatment ? $treatment->name : $usage->treatment_id,
+                        'voucher_quantity' => 0,
+                        'voucher_price' => 0,
+                        'walkin_quantity' => 0,
+                        'walkin_price' => 0,
+                        'voucher_usage' => $usage->voucher_usage,
+                        'total_quantity' => 0,
+                        'total_price' => 0,
+                    ];
+                    
+                    $results->put($key, $item);
+                }
+            }
+
+            return $results->values();
         } else return Voucher::all();
     }
 

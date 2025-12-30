@@ -22,6 +22,13 @@ class Room extends Model
         'id'
     ];
 
+    // app/Models/Treatment.php
+    protected static function booted()
+    {
+        static::saved(fn () => event(new \App\Events\EntityUpdated('rooms')));
+        static::deleted(fn () => event(new \App\Events\EntityUpdated('rooms')));
+    }
+
     public function branch()
     {
         return $this->belongsTo(Branch::class);

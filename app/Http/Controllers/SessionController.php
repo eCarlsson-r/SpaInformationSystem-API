@@ -16,41 +16,74 @@ class SessionController extends Controller
      */
     public function index(Request $request)
     {
-        $sessions = Session::whereIn('sessions.status', json_decode($request->input('status')))
-            ->join('treatments', 'sessions.treatment_id', '=', 'treatments.id')
-            ->join('customers', 'sessions.customer_id', '=', 'customers.id')
-            ->join('employees', 'sessions.employee_id', '=', 'employees.id')
-            ->join('beds', 'sessions.bed_id', '=', 'beds.id')
-            ->leftJoin('walkin', 'walkin.session_id', '=', 'sessions.id')
-            ->leftJoin('voucher', 'voucher.session_id', '=', 'sessions.id')
-            ->leftJoin('sales', 'sales.id', '=', 'walkin.sales_id')
-            ->leftJoin('incomes', 'incomes.id', '=', 'sales.income_id')
-            ->select(
-                'sessions.*',
-                'customers.name AS customer_name', 
-                'treatments.name AS treatment_name', 
-                'treatments.duration AS treatment_duration', 
-                'employees.name AS therapist_name', 
-                'beds.name AS bed_name',
-                'walkin.id AS walkin_id',
-                'voucher.id AS voucher_id',
-                'incomes.journal_reference AS reference'
-            );
-        
-        if ($request->input('branch_id')) {
-            return $sessions->where('sessions.branch_id', $request->input('branch_id'))->get();
-        } else if ($request->input('employee_id')) {
-            return $sessions->where('sessions.employee_id', $request->input('employee_id'))->get();
-        } else if ($request->input("start") && $request->input("end") && $request->input("from_employee") && $request->input("to_employee") && $request->input("order_by")) {
-            return $sessions->whereBetween('sessions.date', [
-                Carbon::parse($request->input("start"))->toDateString(), 
-                Carbon::parse($request->input("end"))->toDateString()
-            ])
-                ->whereBetween('sessions.employee_id', [$request->input("from_employee"), $request->input("to_employee")])
-                ->orderBy($request->input("order_by"))
+        if ($request->input("variant") == "walkin-voucher-usage") {
+            $fromDate = Carbon::parse($request->input("start"))->toDateString();
+            $toDate = Carbon::parse($request->input("end"))->toDateString();
+            
+            return Session::join('treatments', 'sessions.treatment_id', '=', 'treatments.id')
+                ->join('employees', 'sessions.employee_id', '=', 'employees.id')
+                ->leftJoin('voucher', 'sessions.id', '=', 'voucher.session_id')
+                ->leftJoin('walkin', 'sessions.id', '=', 'walkin.session_id')
+                ->leftJoin('sales', 'walkin.sales_id', '=', 'sales.id')
+                ->leftJoin('sales_records', function($join) {
+                    $join->on('sales.id', '=', 'sales_records.sales_id')
+                         ->on('sales_records.treatment_id', '=', 'sessions.treatment_id');
+                })
+                ->leftJoin('incomes', 'sales.income_id', '=', 'incomes.id')
+                ->selectRaw("
+                    sessions.date, 
+                    sessions.start as time,
+                    MAX(IF(sessions.payment = 'voucher', voucher.id, incomes.journal_reference)) as `reference`,
+                    employees.name as `therapist_name`,
+                    treatments.name as description,
+                    MAX(IF(sessions.payment = 'voucher', voucher.amount, ROUND((sales_records.price - (COALESCE(sales_records.discount, 0)))/1000)*1000)) as `price`
+                ")
+                ->whereBetween('sessions.date', [$fromDate, $toDate])
+                ->whereIn('sessions.status', ['completed', 'ongoing'])
+                ->where(function($query) {
+                    $query->where('voucher.amount', '>', 0)
+                          ->orWhere('sales_records.price', '>', 0);
+                })
+                ->groupBy('sessions.id', 'sessions.date', 'sessions.start', 'employees.name', 'treatments.name')
+                ->orderBy('sessions.id')
                 ->get();
         } else {
-            return $sessions->get();
+            $sessions = Session::whereIn('sessions.status', json_decode($request->input('status')))
+                ->join('treatments', 'sessions.treatment_id', '=', 'treatments.id')
+                ->join('customers', 'sessions.customer_id', '=', 'customers.id')
+                ->join('employees', 'sessions.employee_id', '=', 'employees.id')
+                ->join('beds', 'sessions.bed_id', '=', 'beds.id')
+                ->leftJoin('walkin', 'walkin.session_id', '=', 'sessions.id')
+                ->leftJoin('voucher', 'voucher.session_id', '=', 'sessions.id')
+                ->leftJoin('sales', 'sales.id', '=', 'walkin.sales_id')
+                ->leftJoin('incomes', 'incomes.id', '=', 'sales.income_id')
+                ->select(
+                    'sessions.*',
+                    'customers.name AS customer_name', 
+                    'treatments.name AS treatment_name', 
+                    'treatments.duration AS treatment_duration', 
+                    'employees.name AS therapist_name', 
+                    'beds.name AS bed_name',
+                    'walkin.id AS walkin_id',
+                    'voucher.id AS voucher_id',
+                    'incomes.journal_reference AS reference'
+                );
+            
+            if ($request->input('branch_id')) {
+                return $sessions->where('sessions.branch_id', $request->input('branch_id'))->get();
+            } else if ($request->input('employee_id')) {
+                return $sessions->where('sessions.employee_id', $request->input('employee_id'))->get();
+            } else if ($request->input("start") && $request->input("end") && $request->input("from_employee") && $request->input("to_employee") && $request->input("order_by")) {
+                return $sessions->whereBetween('sessions.date', [
+                    Carbon::parse($request->input("start"))->toDateString(), 
+                    Carbon::parse($request->input("end"))->toDateString()
+                ])
+                    ->whereBetween('sessions.employee_id', [$request->input("from_employee"), $request->input("to_employee")])
+                    ->orderBy($request->input("order_by"))
+                    ->get();
+            } else {
+                return $sessions->get();
+            }
         }
     }
 

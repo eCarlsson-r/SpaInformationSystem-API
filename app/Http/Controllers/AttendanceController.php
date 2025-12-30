@@ -101,8 +101,8 @@ class AttendanceController extends Controller
     {
         $attendance = Attendance::with('employee')
             ->whereBetween('date', [
-                Carbon::parse($id."-1")->toDateString(), 
-                Carbon::parse($id."-7")->toDateString()
+                Carbon::parse($id."-1")->format('Y-m-d'), 
+                Carbon::parse($id."-7")->format('Y-m-d')
             ])
             ->get();
 

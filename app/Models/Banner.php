@@ -21,4 +21,11 @@ class Banner extends Model
     ];
 
     protected $guarded = ['id'];
+
+    // app/Models/Treatment.php
+    protected static function booted()
+    {
+        static::saved(fn () => event(new \App\Events\EntityUpdated('banners')));
+        static::deleted(fn () => event(new \App\Events\EntityUpdated('banners')));
+    }
 }
