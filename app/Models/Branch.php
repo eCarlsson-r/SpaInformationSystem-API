@@ -22,7 +22,7 @@ class Branch extends Model
         'walkin_account',
         'voucher_purchase_account',
         'voucher_usage_account',
-        'branch_img'
+        'image'
     ];
 
     protected $attributes = [

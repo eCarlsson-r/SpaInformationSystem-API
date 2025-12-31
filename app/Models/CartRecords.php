@@ -21,9 +21,6 @@ class CartRecords extends Model
         'voucher_buy_quantity',
         'price'
     ];
-    protected $casts = [
-        'price' => 'numeric',
-    ];
     protected $guarded = ['id'];
 
     public function customer()

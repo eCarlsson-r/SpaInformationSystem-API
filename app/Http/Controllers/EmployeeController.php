@@ -26,6 +26,10 @@ class EmployeeController extends Controller
             return $query->where('status', 'fixed');
         });
 
+        $query->when(request()->has('show') && request()->input('show') == "therapist", function ($query) {
+            return $query->where('grade.grade', '!=', 'K');
+        });
+
         return $query->get();
     }
 

@@ -22,13 +22,13 @@ class BranchController extends Controller
     public function store(Request $request)
     {
         $createData = $request->all();
-        if ($request->hasFile('branch_img') && $request->file('branch_img')->isValid()) {
-            $path = $request->file('branch_img')->storePubliclyAs(
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+            $path = $request->file('image')->storePubliclyAs(
                 'images', 
-                $request->file('branch_img')->getClientOriginalName(), 
+                $request->file('image')->getClientOriginalName(), 
                 'public'
             );
-            $createData['branch_img'] = Storage::url($path);
+            $createData['image'] = Storage::url($path);
         }
 
         $branch = Branch::create($createData);
@@ -54,14 +54,14 @@ class BranchController extends Controller
     public function update(Request $request, Branch $branch)
     {
         $updateData = $request->all();
-        if ($request->hasFile('branch_img') && $request->file('branch_img')->isValid()) {
-            $path = $request->file('branch_img')->storePubliclyAs(
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+            $path = $request->file('image')->storePubliclyAs(
                 'images', 
-                $request->file('branch_img')->getClientOriginalName(), 
+                $request->file('image')->getClientOriginalName(), 
                 'public'
             );
 
-            $updateData['branch_img'] = Storage::url($path);
+            $updateData['image'] = Storage::url($path);
         }
 
         if ($branch->update($updateData)) {

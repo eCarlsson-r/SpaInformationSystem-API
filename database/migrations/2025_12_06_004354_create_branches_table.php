@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('walkin_account', 6)->nullable();
             $table->string('voucher_purchase_account', 6)->nullable();
             $table->string('voucher_usage_account', 6)->nullable();
-            $table->text('branch_img');
+            $table->text('image');
         });
     }
 

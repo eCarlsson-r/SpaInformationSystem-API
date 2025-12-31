@@ -11,6 +11,7 @@ use App\Http\Controllers\BankController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\BonusController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CompensationController;
 use App\Http\Controllers\PeriodController;
@@ -87,5 +88,12 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::get('/banner', [BannerController::class, 'index']);
+Route::get('/branch', [BranchController::class, 'index']);
 Route::get('/treatment', [TreatmentController::class, 'index']);
 Route::get('/category', [CategoryController::class, 'index']);
+Route::get('/category/{id}', [CategoryController::class, 'show']);
+Route::get('/room/available', [RoomController::class, 'available']);
+Route::get('/room', [RoomController::class, 'index']);
+Route::get('/employee', [EmployeeController::class, 'index']);
+Route::get('/cart', [CartController::class, 'index']);
+Route::post('/cart', [CartController::class, 'bookSession']);

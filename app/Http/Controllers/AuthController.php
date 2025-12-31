@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Models\Customer;
 use App\Models\Files;
 use App\Models\Employee;
 
@@ -17,12 +18,22 @@ class AuthController extends Controller
         // Handle login logic here
         $credentials = $request->only('username', 'password');
         $user = User::where('username', $request->username)->first();
-        $employee = Employee::where('user_id', $user->id)->first();
 
         if (auth()->attempt($credentials)) {
-            $token = auth()->user()->createToken('pos-token')->plainTextToken;
-            if ($employee) $user->employee = $employee;
-            return response()->json(['data' => $user, 'token' => $token, 'type' => $user->type], 200);
+            if ($request->header('Origin') === 'http://localhost:3001' && $user->type == 'CUSTOMER') {
+                $customer = Customer::where('user_id', $user->id)->first();
+                $token = auth()->user()->createToken('web-token')->plainTextToken;
+                if ($customer) $user->customer = $customer;
+                return response()->json(['data' => $user, 'token' => $token, 'type' => $user->type], 200);
+            } else if ($request->header('Origin') === 'http://localhost:3000' && $user->type != 'CUSTOMER') {
+                $employee = Employee::where('user_id', $user->id)->first();
+                $token = auth()->user()->createToken('admin-token')->plainTextToken;
+                if ($employee) $user->employee = $employee;
+                return response()->json(['data' => $user, 'token' => $token, 'type' => $user->type], 200);
+            } else {
+                auth()->logout();
+                return response()->json(['message' => 'Username or Password is invalid'], 401);
+            }
         } else if (!$user) {
             return response()->json(['message' => 'No account exist with the given username.'], 401);
         } else if (!Hash::check($request->password, $user->password)) {
@@ -49,5 +60,28 @@ class AuthController extends Controller
         );
 
         return response()->json(['success' => true]);
+    }
+
+    public function register(Request $request) {
+        $customer = Customer::create([
+            'name' => $request->input('name'),
+            'email' => $request->input('email'),
+            'mobile' => $request->input('mobile'),
+            'user_id' => Account::create([
+                'email' => $request->input('email'),
+                'password' => Hash::make($request->input('password')),
+                'type' => 'CUSTOMER'
+            ])->id,
+            'address' => $request->input('address'),
+            'country' => $request->input('country'),
+            'province' => $request->input('province'),
+            'city' => $request->input('city')
+        ]);
+
+        if ($customer) {
+            return response()->json($customer, 201);
+        } else {
+            return response()->json(['message' => 'Failed to register'], 500);
+        }
     }
 }

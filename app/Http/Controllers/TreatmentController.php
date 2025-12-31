@@ -12,17 +12,26 @@ class TreatmentController extends Controller
      */
     public function index()
     {
-        $query = Treatment::query();
+        if (request()->has('vouchers')) {
+            $query = Treatment::where('voucher_normal_quantity', '>', 0)->get();
+            if ($query->isEmpty()) {
+                return response()->json(['message' => 'No vouchers found'], 404);
+            }
+            return $query;
+        } else {
+            $query = Treatment::query();
 
-        $query->when(request()->has('id'), function ($query) {
-            return $query->with('category')->where('id', request('id'));
-        });
+            $query->when(request()->has('id'), function ($query) {
+                return $query->with('category')->where('id', request('id'));
+            });
 
-        $query->when(request()->has('active_only'), function ($query) {
-            return $query->with('category')->whereColumn('applicable_time_start', '<>', 'applicable_time_end');
-        });
+            $query->when(request()->has('active_only'), function ($query) {
+                return $query->with('category')->whereColumn('applicable_time_start', '<>', 'applicable_time_end');
+            });
 
-        return $query->with('category')->get();
+            return $query->with('category')->get();
+        }
+        
     }
 
     /**
@@ -30,7 +39,27 @@ class TreatmentController extends Controller
      */
     public function store(Request $request)
     {
-        $treatment = Treatment::create($request->all());
+        $createData = $request->all();
+
+        if ($request->hasFile('body_img') && $request->file('body_img')->isValid()) {
+            $path = $request->file('body_img')->storePubliclyAs(
+                'images', 
+                $request->file('body_img')->getClientOriginalName(), 
+                'public'
+            );
+            $createData['body_img'] = Storage::url($path);
+        }
+
+        if ($request->hasFile('icon_img') && $request->file('icon_img')->isValid()) {
+            $path = $request->file('icon_img')->storePubliclyAs(
+                'images', 
+                $request->file('icon_img')->getClientOriginalName(), 
+                'public'
+            );
+            $createData['icon_img'] = Storage::url($path);
+        }
+        
+        $treatment = Treatment::create($createData);
 
         if ($treatment) {
             return response()->json($treatment, 201);
