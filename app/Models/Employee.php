@@ -64,7 +64,7 @@ class Employee extends Model
 
     public function grade()
     {
-        return $this->hasOne(Grade::class)->latestOfMany();
+        return $this->hasMany(Grade::class);
     }
 
     public function attendance()

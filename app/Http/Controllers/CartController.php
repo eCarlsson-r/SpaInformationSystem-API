@@ -8,30 +8,22 @@ use App\Models\CartRecords;
 class CartController extends Controller
 {
     public function index(Request $request) {
-        return CartRecords::with(['treatment', 'employee'])
-        ->where('customer_id', auth()->id())
+        return CartRecords::with(['treatment', 'employee', 'room'])
+        ->where('customer_id', auth()->user()->customer->id)
         ->get();
     }
 
     public function bookSession(Request $request) {
-        $customer = $request->input("customer_id");
-        $treatment = $request->input("treatment_id");
-        $room = $request->input("room_id");
-        $employee = $request->input("employee_id");
-        $quantity = $request->input("quantity");
-        $price = $request->input("price");
-        $session_date = $request->input("session_date");
-        $session_time = $request->input("session_time");
-
         $cart = CartRecords::create([
-            "customer_id" => $customer,
-            "treatment_id" => $treatment,
-            "room_id" => $room,
-            "employee_id" => $employee,
-            "quantity" => $quantity,
-            "price" => $price,
-            "session_date" => $session_date,
-            "session_time" => $session_time
+            "customer_id" => auth()->user()->customer->id,
+            "treatment_id" => $request->input("treatment_id"),
+            "room_id" => $request->input("room_id"),
+            "employee_id" => $request->input("employee_id"),
+            "quantity" => $request->input("quantity"),
+            "price" => $request->input("price"),
+            "session_type" => $request->input("session_type"),
+            "session_date" => $request->input("session_date"),
+            "session_time" => $request->input("session_time")
         ]);
         
         if ($cart) {
@@ -42,7 +34,7 @@ class CartController extends Controller
     }
 
     public function buyVoucher(Request $request) {
-        $customer = $request->input("customer_id");
+        $customer = auth()->user()->customer->id;
         $treatment = $request->input("treatment_id");
         $quantity = $request->input("quantity");
         $price = $request->input("price");
@@ -63,6 +55,7 @@ class CartController extends Controller
             $cart = CartRecords::create([
                 "customer_id" => $customer,
                 "treatment_id" => $treatment,
+                "session_type" => "voucher",
                 "quantity" => $quantity,
                 "price" => $price,
                 "voucher_normal_quantity" => $normal_quantity,
@@ -70,14 +63,14 @@ class CartController extends Controller
             ]);
 
             if ($cart) {
-                return response()->json($cart, 201);
+                return response()->json($cart->with('treatment'), 201);
             } else {
                 return response()->json(['message' => 'Failed to create cart'], 500);
             }
         }
     }
 
-    public function destroy(Cart $cart) {
+    public function destroy(CartRecords $cart) {
         if ($cart->delete()) {
             return response()->json(['message' => 'Cart deleted successfully'], 200);
         } else {

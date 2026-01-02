@@ -37,18 +37,15 @@ use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\WalkinController;
 use App\Http\Controllers\WalletController;
 
-Route::get('/user', function (Request $request) {
-    return $request->user()->load('employee');
-})->middleware('auth:sanctum');
-
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/subscribe', [AuthController::class, 'subscribe']);
+Route::post('/register', [AuthController::class, 'register']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', [AuthController::class, 'user']);
     Route::get('/dashboard', [DashboardController::class, 'dashboard']);
     Route::get('/daily', [DashboardController::class, 'daily']);
     Route::get('account/lookup', [AccountController::class, 'lookup']);
-    Route::post('/files', [AuthController::class, 'upload']);
     Route::post('/attendance/sync', [AttendanceController::class, 'sync']);
     Route::get('/attendance/sync-status', [AttendanceController::class, 'getSyncStatus']);
 
@@ -85,15 +82,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('walkin', WalkinController::class); 
     Route::apiResource('sales', SalesController::class);
     Route::apiResource('banner', BannerController::class);
+
+    Route::apiResource('cart', CartController::class);
+    Route::post('/cart/session', [CartController::class, 'bookSession']);
+    Route::post('/cart/voucher', [CartController::class, 'buyVoucher']);
 });
 
 Route::get('/banner', [BannerController::class, 'index']);
 Route::get('/branch', [BranchController::class, 'index']);
 Route::get('/treatment', [TreatmentController::class, 'index']);
-Route::get('/category', [CategoryController::class, 'index']);
-Route::get('/category/{id}', [CategoryController::class, 'show']);
+Route::apiResource('category', CategoryController::class);
 Route::get('/room/available', [RoomController::class, 'available']);
 Route::get('/room', [RoomController::class, 'index']);
 Route::get('/employee', [EmployeeController::class, 'index']);
-Route::get('/cart', [CartController::class, 'index']);
-Route::post('/cart', [CartController::class, 'bookSession']);

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Session;
+use App\Models\Employee;
+use App\Models\Customer;
 use App\Models\Journal;
 use App\Models\Walkin;
 use App\Models\Voucher;
@@ -46,6 +48,11 @@ class SessionController extends Controller
                 })
                 ->groupBy('sessions.id', 'sessions.date', 'sessions.start', 'employees.name', 'treatments.name')
                 ->orderBy('sessions.id')
+                ->get();
+        } else if (auth()->user()->customer) {
+            return Session::with('treatment', 'employee', 'bed', 'bed.room.branch')
+                ->where('sessions.customer_id', auth()->user()->customer->id)
+                ->where('sessions.status', 'waiting')
                 ->get();
         } else {
             $sessions = Session::whereIn('sessions.status', json_decode($request->input('status')))
@@ -130,8 +137,8 @@ class SessionController extends Controller
         }
         
         if ($session) {
-            Employee::find($request->employee_id)->user->notify(new SessionMade($session));
-            Customer::find($request->customer_id)->user->notify(new SessionMade($session));
+            //Employee::find($request->employee_id)->user->notify(new SessionMade($session));
+            //Customer::find($request->customer_id)->user->notify(new SessionMade($session));
             return response()->json($session, 201);
         } else {
             return response()->json(['message' => 'Failed to create session'], 500);

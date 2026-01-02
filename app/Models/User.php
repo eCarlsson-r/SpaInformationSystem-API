@@ -53,5 +53,10 @@ class User extends Authenticatable
         return $this->hasOne(Employee::class);
     }
 
+    public function customer()
+    {
+        return $this->hasOne(Customer::class);
+    }
+
     public $timestamps = false;
 }

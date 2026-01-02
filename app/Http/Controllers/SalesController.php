@@ -20,8 +20,15 @@ class SalesController extends Controller
      */
     public function index(Request $request)
     {
-        return Sales::with('customer', 'records', 'income', 'income.payments')->whereBetween('date', [Carbon::parse($request->start), Carbon::parse($request->end)])
-            ->where('branch_id', $request->branch)->get();
+        if (auth()->user()->customer) {
+            return Sales::with('records')
+            ->where('customer_id', auth()->user()->customer->id)->get();
+        } else {
+            return Sales::with('customer', 'records', 'income', 'income.payments')
+                ->whereBetween('date', [Carbon::parse($request->start), Carbon::parse($request->end)])
+                ->where('branch_id', $request->branch)
+                ->get();
+        }
     }
 
     /**

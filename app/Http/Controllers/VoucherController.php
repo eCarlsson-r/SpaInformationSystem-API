@@ -184,6 +184,8 @@ class VoucherController extends Controller
             }
 
             return $results->values();
+        } else if (auth()->user()->customer) {
+            return Voucher::where('customer_id', auth()->user()->customer->id)->get();
         } else return Voucher::all();
     }
 

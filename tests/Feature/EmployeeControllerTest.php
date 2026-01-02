@@ -22,7 +22,7 @@ class EmployeeControllerTest extends TestCase
     {
         $employees = Employee::factory()->count(3)->create();
 
-        $response = $this->getJson(route('employee.index'));
+        $response = $this->getJson('/api/employee');
 
         $response->assertStatus(200)
             ->assertJsonCount(3);

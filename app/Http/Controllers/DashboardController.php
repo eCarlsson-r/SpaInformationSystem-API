@@ -229,7 +229,7 @@ class DashboardController extends Controller
             "monthly_income" => $branch->sales()
                 ->join('incomes', 'sales.income_id', '=', 'incomes.id')
                 ->join('income_payments', 'income_payments.income_id', '=', 'incomes.id')
-                ->selectRaw('MONTH(incomes.date) as month, SUM(income_payments.amount) as amount')
+                ->selectRaw('MONTH(incomes.date) as month, SUM(income_payments.amount) as income')
                 ->whereYear('incomes.date', $profit_year)
                 ->groupBy('month')->get(),
             "uncontacted" => $branch->employee()

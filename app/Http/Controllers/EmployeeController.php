@@ -27,7 +27,13 @@ class EmployeeController extends Controller
         });
 
         $query->when(request()->has('show') && request()->input('show') == "therapist", function ($query) {
-            return $query->where('grade.grade', '!=', 'K');
+            return $query->leftJoin('grades', 'employees.id', '=', 'grades.employee_id')
+                ->leftJoin('attendance', 'employees.id', '=', 'attendance.employee_id')
+                ->whereDoesntHave('session', function ($query) {
+                    return $query->where('date', '=', request('date'))->where('start', '<=', request('time'))->where('end_time', '>=', request('time'));
+                })
+                ->where('grades.grade', '!=', 'K')
+                ->where('attendance.date', '=', request('date'));
         });
 
         return $query->get();

@@ -43,6 +43,15 @@ class AuthController extends Controller
         }
     }
 
+    public function user(Request $request)
+    {
+        if ($request->header('Origin') === 'http://localhost:3001' && $request->user()->type == 'CUSTOMER') {
+            return $request->user()->load('customer');
+        } else if ($request->header('Origin') === 'http://localhost:3000' && $request->user()->type != 'CUSTOMER') {
+            return $request->user()->load('employee');
+        }
+    }
+
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -65,10 +74,13 @@ class AuthController extends Controller
     public function register(Request $request) {
         $customer = Customer::create([
             'name' => $request->input('name'),
+            'gender' => $request->input('gender'),
+            'date_of_birth' => $request->input('date_of_birth'),
+            'place_of_birth' => $request->input('place_of_birth'),
             'email' => $request->input('email'),
             'mobile' => $request->input('mobile'),
-            'user_id' => Account::create([
-                'email' => $request->input('email'),
+            'user_id' => User::create([
+                'username' => $request->input('email'),
                 'password' => Hash::make($request->input('password')),
                 'type' => 'CUSTOMER'
             ])->id,

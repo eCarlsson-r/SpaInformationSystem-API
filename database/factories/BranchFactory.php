@@ -24,7 +24,7 @@ class BranchFactory extends Factory
             'country' => $this->faker->country(),
             'phone' => $this->faker->phoneNumber(),
             'description' => $this->faker->sentence(),
-            'branch_img' => $this->faker->imageUrl(),
+            'image' => $this->faker->imageUrl(),
             'cash_account' => Account::factory(),
             'walkin_account' => Account::factory(),
             'voucher_purchase_account' => Account::factory(),

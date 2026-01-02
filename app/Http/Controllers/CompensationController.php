@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Compensation;
+use App\Models\Period;
 use App\Services\CompensationService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -14,7 +15,39 @@ class CompensationController extends Controller
      */
     public function index(Request $request)
     {
-        if ($request->start && $request->end && $request->has('employee_id')) {
+        if ($request->has('period_id') && $request->has('employee_id')) {
+            $period = Period::find($request->period_id);
+            $service = new CompensationService($period->start, $period->end);
+            $summary = array();
+            $data = Compensation::where('period_id', $request->period_id)->where('employee_id', $request->employee_id)->first();
+            
+            array_push($summary, ["attribute"=>"therapist_bonus", "value"=>$data->therapist_bonus]);
+            array_push($summary, ["attribute"=>"recruit_bonus", "value"=>$data->recruit_bonus]);
+            
+            if ($data->addition_description !== "") {
+                $addition = explode('<br/>', $data->addition_description);
+                foreach($addition as $add) {
+                    $value = explode(' sebesar ', $add);
+                    if (count($value) > 1 && $value[1] > 0) {
+                        array_push($summary, ["attribute"=>$value[0], "value"=>$value[1]]);
+                    }
+                }
+            }
+            
+            if ($data->deduction_description !== "") {
+                $deduction = explode('<br/>', $data->deduction_description);
+                foreach($deduction as $ded) {
+                    $value = explode(' sebesar ', $ded);
+                    if (count($value) > 1 && $value[1] > 0) {
+                        array_push($summary, ["attribute"=>$value[0], "value"=>$value[1]]);
+                    }
+                }
+            }
+
+            array_push($summary, ["attribute"=>"total", "value"=>$data->total]);
+
+            return response()->json($summary, 200);
+        } else if ($request->start && $request->end && $request->has('employee_id')) {
             // [NEW] Check if we want a specific report for specific employees
             $service = new CompensationService(Carbon::parse($request->start)->toDateString(), Carbon::parse($request->end)->toDateString());
             // Automatically determine report type (Voucher for Cashier, Session for Therapist)

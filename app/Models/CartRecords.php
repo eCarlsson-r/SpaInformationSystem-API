@@ -18,7 +18,7 @@ class CartRecords extends Model
         'room_id',
         'quantity',
         'voucher_normal_quantity',
-        'voucher_buy_quantity',
+        'voucher_purchase_quantity',
         'price'
     ];
     protected $guarded = ['id'];
