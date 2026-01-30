@@ -3,6 +3,13 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\Banner;
+use App\Models\Branch;
+use App\Models\Account;
+use App\Models\Employee;
+use App\Models\Customer;
+use App\Models\Category;
+use App\Models\Treatment;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -141,22 +148,20 @@ class DatabaseSeeder extends Seeder
         ]);
 
         Customer::factory()->create([
-            'user_id' => User::factory()->create([
-                'username' => 'demo.customer@ymail.com',
-                'password' => Hash::make('Demo12345'),
-                'type' => 'CUSTOMER'
-            ])->id,
-            'name',
-            'gender',
-            'address',
-            'city',
-            'country',
-            'place_of_birth',
-            'date_of_birth',
-            'mobile',
-            'email',
-            'referral_code',
-            'liability_account'
+            'name' => 'Demo Customer',
+            'gender' => 'M',
+            'city' => 'Medan',
+            'country' => 'Indonesia',
+            'place_of_birth' => 'Anywhere',
+            'date_of_birth' => '1976-08-01',
+            'mobile' => '08357583908',
+            'email' => 'demo.customer@ymail.com',
+        ]);
+
+        User::factory()->create([
+            'username' => 'demo.customer@ymail.com',
+            'password' => Hash::make('Demo12345'),
+            'type' => 'CUSTOMER'
         ]);
 
         Account::factory()->create([
@@ -328,63 +333,55 @@ class DatabaseSeeder extends Seeder
         ]);
 
         Banner::factory()->create([
-            'name' => 'Welcome',
             'image' => '/storage/images/slider1.webp',
             'title' => 'Welcome',
             'subtitle' => 'CARLSSON Spa & Salon',
             'description' => 'Refresh your body and soul here',
-            'button_text' => 'Refresh with our treatments',
-            'button_url' => 'treatments'
+            'action' => 'Refresh with our treatments',
+            'action_page' => 'treatments'
         ]);
 
         Banner::factory()->create([
-            'name' => 'Package Max Fresh',
             'image' => 'images/resource/slider2',
-            'title' => 'package-intro',
-            'subtitle' => 'double-treatment',
-            'description' => 'max-fresh-package',
-            'button_text' => 'enjoy-combination-relax',
-            'button_url' => 'package-max-fresh'
+            'title' => 'Enjoy our exclusive treatments with',
+            'subtitle' => 'TREATMENT PACKAGES',
+            'description' => 'Combination of treatments that provides maximum freshness.',
+            'action' => 'Enjoy combination of treatments for maximum relaxation.',
+            'action_page' => 'package-max-fresh'
         ]);
 
         Banner::factory()->create([
-            'name' => 'Lets Invest Voucher',
             'image' => 'images/resource/slider4',
-            'title' => 'lets-invest-with',
-            'subtitle' => 'voucher-set',
-            'description' => 'time-invest-grow',
-            'button_text' => 'invest-and-enjoy',
-            'button_url' => 'lets-invest-voucher'
+            'title' => "Let's invest with",
+            'subtitle' => 'Voucher Set',
+            'description' => 'To enjoy our treatment later without having to think about cost',
+            'action' => 'Collect the voucher and enjoy the treatment as you like',
+            'action_page' => 'lets-invest-voucher'
         ]);
 
         $bodyCategory = Category::factory()->create([
             'name' => 'Body',
-            'description' => 'Body treatments',
-            'image' => 'images/resource/product1.jpg'
+            'description' => 'Body treatments'
         ])->id;
 
         $faceCategory = Category::factory()->create([
             'name' => 'Face',
-            'description' => 'Face treatments',
-            'image' => 'images/resource/product2.jpg'
+            'description' => 'Face treatments'
         ])->id;
 
         $hairCategory = Category::factory()->create([
             'name' => 'Hair',
-            'description' => 'Hair treatments',
-            'image' => 'images/resource/product3.jpg'
+            'description' => 'Hair treatments'
         ])->id;
 
         $nailCategory = Category::factory()->create([
             'name' => 'Nail',
-            'description' => 'Nail treatments',
-            'image' => 'images/resource/product4.jpg'
+            'description' => 'Nail treatments'
         ])->id;
 
         $waxingCategory = Category::factory()->create([
             'name' => 'Waxing',
-            'description' => 'Waxing treatments',
-            'image' => 'images/resource/product5.jpg'
+            'description' => 'Waxing treatments'
         ])->id;
 
         Treatment::factory()->create([
@@ -392,8 +389,7 @@ class DatabaseSeeder extends Seeder
             'category_id' => $bodyCategory,
             'price' => 150000,
             'duration' => 60,
-            'description' => 'Relaxing body scrub treatment',
-            'image' => 'images/resource/product1.jpg'
+            'description' => 'Relaxing body scrub treatment'
         ]);
 
         Treatment::factory()->create([
@@ -401,8 +397,7 @@ class DatabaseSeeder extends Seeder
             'category_id' => $bodyCategory,
             'price' => 200000,
             'duration' => 60,
-            'description' => 'Relaxing body massage treatment',
-            'image' => 'images/resource/product2.jpg'
+            'description' => 'Relaxing body massage treatment'
         ]);
 
         Treatment::factory()->create([
@@ -410,8 +405,7 @@ class DatabaseSeeder extends Seeder
             'category_id' => $faceCategory,
             'price' => 250000,
             'duration' => 60,
-            'description' => 'Relaxing facial treatment',
-            'image' => 'images/resource/product3.jpg'
+            'description' => 'Relaxing facial treatment'
         ]);
 
         Treatment::factory()->create([
@@ -419,8 +413,7 @@ class DatabaseSeeder extends Seeder
             'category_id' => $hairCategory,
             'price' => 300000,
             'duration' => 60,
-            'description' => 'Relaxing hair spa treatment',
-            'image' => 'images/resource/product4.jpg'
+            'description' => 'Relaxing hair spa treatment'
         ]);
 
         Treatment::factory()->create([
@@ -428,8 +421,7 @@ class DatabaseSeeder extends Seeder
             'category_id' => $nailCategory,
             'price' => 100000,
             'duration' => 60,
-            'description' => 'Relaxing manicure treatment',
-            'image' => 'images/resource/product5.jpg'
+            'description' => 'Relaxing manicure treatment'
         ]);
 
         Treatment::factory()->create([
@@ -437,8 +429,7 @@ class DatabaseSeeder extends Seeder
             'category_id' => $nailCategory,
             'price' => 150000,
             'duration' => 60,
-            'description' => 'Relaxing pedicure treatment',
-            'image' => 'images/resource/product6.jpg'
+            'description' => 'Relaxing pedicure treatment'
         ]);
 
         Treatment::factory()->create([
@@ -446,8 +437,7 @@ class DatabaseSeeder extends Seeder
             'category_id' => $waxingCategory,
             'price' => 200000,
             'duration' => 60,
-            'description' => 'Relaxing waxing treatment',
-            'image' => 'images/resource/product7.jpg'
+            'description' => 'Relaxing waxing treatment'
         ]);
 
         Treatment::factory()->create([
@@ -455,8 +445,7 @@ class DatabaseSeeder extends Seeder
             'category_id' => $waxingCategory,
             'price' => 100000,
             'duration' => 60,
-            'description' => 'Relaxing threading treatment',
-            'image' => 'images/resource/product8.jpg'
+            'description' => 'Relaxing threading treatment'
         ]);
     }
 }

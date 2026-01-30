@@ -13,7 +13,6 @@ class TreatmentFactory extends Factory
     public function definition()
     {
         return [
-            'id' => $this->faker->unique()->word,
             'name' => $this->faker->word,
             'description' => $this->faker->sentence,
             'price' => $this->faker->numberBetween(100000, 500000),

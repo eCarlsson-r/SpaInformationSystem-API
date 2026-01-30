@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('employees', function (Blueprint $table) {
-            $table->integer('id', true);
+            $table->id();
             $table->integer('user_id')->default(0);
             $table->string('complete_name', 200);
             $table->string('name', 50);
@@ -25,7 +25,7 @@ return new class extends Migration
             $table->boolean('vaccine1')->default(false);
             $table->boolean('vaccine2')->default(false);
             $table->integer('recruiter')->nullable();
-            $table->string('branch_id', 10);
+            $table->foreignId('branch_id')->constrained('branches')->onDelete('cascade')->onUpdate('cascade');
             $table->integer('base_salary');
             $table->string('expertise', 1000);
             $table->string('gender', 1);
@@ -38,8 +38,6 @@ return new class extends Migration
             $table->integer('late_deduction')->default(20000);
             $table->string('bank_account', 20)->default('');
             $table->string('bank', 10)->default('');
-
-            $table->foreign('branch_id')->references('id')->on('branches')->onUpdate('cascade')->onDelete('cascade');
         });
     }
 
