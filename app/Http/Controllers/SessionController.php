@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Session;
 use App\Models\Employee;
 use App\Models\Customer;
@@ -137,9 +138,12 @@ class SessionController extends Controller
         }
         
         if ($session) {
-            Employee::find($request->employee_id)->user->notify(new SessionMade($session));
-            Customer::find($request->customer_id)->user->notify(new SessionMade($session));
-            User::find(1)->notify(new SessionMade($session));
+            $employee = Employee::find($request->employee_id)->user;
+            if ($employee) $employee->notify(new SessionMade($session));
+            $customer = Customer::find($request->customer_id)->user;
+            if ($customer) $customer->notify(new SessionMade($session));
+            $admin = User::find(1);
+            if ($admin) $admin->notify(new SessionMade($session));
             return response()->json($session, 201);
         } else {
             return response()->json(['message' => 'Failed to create session'], 500);

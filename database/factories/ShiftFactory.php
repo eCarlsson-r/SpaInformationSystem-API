@@ -13,9 +13,9 @@ class ShiftFactory extends Factory
     {
         return [
             'id' => $this->faker->randomElement(['M', 'A', 'N', 'D']),
-            'name' => $this->faker->word(),
-            'start_time' => '09:00:00',
-            'end_time' => '17:00:00',
+            'name' => $this->faker->randomElement(['Morning', 'Afternoon', 'Night', 'Whole Day']),
+            'start_time' => $this->faker->time(),
+            'end_time' => $this->faker->time(),
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Income;
+use App\Models\Customer;
 
 class IncomeFactory extends Factory
 {
@@ -16,7 +17,7 @@ class IncomeFactory extends Factory
             'date' => $this->faker->date(),
             'description' => $this->faker->sentence,
             'partner_type' => 'customer',
-            'partner' => $this->faker->name,
+            'partner' => Customer::factory(),
         ];
     }
 }

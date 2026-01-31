@@ -14,10 +14,11 @@ class VoucherFactory extends Factory
 
     public function definition()
     {
+        $treatment = Treatment::factory()->create();
         return [
-            'id' => $this->faker->uuid,
+            'id' => $treatment->id.sprintf('%06d', $this->faker->numberBetween(1, 999999)),
             'customer_id' => Customer::factory(),
-            'treatment_id' => Treatment::factory(),
+            'treatment_id' => $treatment->id,
             'session_id' => Session::factory(),
             'register_date' => $this->faker->date(),
             'register_time' => $this->faker->time(),

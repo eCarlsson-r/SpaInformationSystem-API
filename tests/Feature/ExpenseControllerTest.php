@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Account;
+use App\Models\Wallet;
 use App\Models\Expense;
 use App\Models\ExpenseItem;
 use App\Models\ExpensePayment;
@@ -43,8 +45,8 @@ class ExpenseControllerTest extends TestCase
 
     public function test_store_creates_expense()
     {
-        $account = \App\Models\Account::factory()->create();
-        $wallet = \App\Models\Wallet::factory()->create(['account_id' => $account->id]);
+        $account = Account::factory()->create();
+        $wallet = Wallet::factory()->create(['account_id' => $account->id]);
         
         $expenseData = [
             'date' => '2023-10-10',

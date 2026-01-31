@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('expense_payments', function (Blueprint $table) {
-            $table->integer('id', true);
+            $table->id();
             $table->foreignId('expense_id')->constrained('expenses')->cascadeOnUpdate()->cascadeOnDelete();
             $table->string('type', 10);
             $table->integer('wallet_id');
             $table->integer('amount');
-            $table->string('description', 200);
+            $table->text('description');
         });
     }
 

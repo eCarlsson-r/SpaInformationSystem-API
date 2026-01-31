@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use App\Models\Bed;
 use App\Models\Customer;
 use App\Models\Employee;
@@ -9,6 +10,7 @@ use App\Models\Session;
 use App\Models\Treatment;
 use App\Models\Voucher;
 use App\Models\Walkin;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -24,17 +26,24 @@ class SessionControllerTest extends TestCase
 
     public function test_it_can_create_a_session_via_api()
     {
+        User::factory()->create([
+            'username' => 'demo_admin',
+            'password' => Hash::make('Am12345'),
+            'type' => 'ADMIN'
+        ]);
+
         $treatment = Treatment::factory()->create();
         $walkin = Walkin::factory()->create(['treatment_id' => $treatment->id]);
         $sessionData = Session::factory()->make([
             'treatment_id' => $treatment->id,
+            'start' => '2023-10-10T10:00:00',
+            'walkin_id' => $walkin->id
         ])->toArray();
-        $sessionData['start'] = '2023-10-10T10:00:00'; // Match controller expectation
-        $sessionData['walkin_id'] = $walkin->id;
 
         $response = $this->postJson('/api/session', $sessionData);
 
-        $response->assertStatus(201);
+        print_r($response->json());
+        $response->assertStatus(201); 
         $this->assertDatabaseHas('sessions', [
             'customer_id' => $sessionData['customer_id'],
         ]);

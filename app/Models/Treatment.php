@@ -9,12 +9,9 @@ class Treatment extends Model
 {
     use HasFactory;
     protected $table = 'treatments';
-    public $incrementing = false;
-    protected $keyType = 'string';
     public $timestamps = false;
 
     protected $fillable = [
-        'id',
         'name',
         'description',
         'price',

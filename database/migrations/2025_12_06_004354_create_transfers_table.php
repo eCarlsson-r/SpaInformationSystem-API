@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transfers', function (Blueprint $table) {
-            $table->integer('id', true);
+            $table->id();
             $table->string('journal_reference', 50);
             $table->date('date');
-            $table->string('from_wallet_id', 50);
-            $table->string('to_wallet_id', 50);
+            $table->foreignId('from_wallet_id')->constrained('wallets')->onUpdate('cascade')->onDelete('cascade');
+            $table->foreignId('to_wallet_id')->constrained('wallets')->onUpdate('cascade')->onDelete('cascade');
             $table->integer('amount');
             $table->string('description', 100);
         });

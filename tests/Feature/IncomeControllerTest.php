@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Account;
+use App\Models\Customer;
+use App\Models\Wallet;
 use App\Models\Income;
 use App\Models\IncomeItem;
 use App\Models\IncomePayment;
@@ -43,16 +46,16 @@ class IncomeControllerTest extends TestCase
 
     public function test_store_creates_income()
     {
-        $account = \App\Models\Account::factory()->create();
-        $wallet = \App\Models\Wallet::factory()->create(['account_id' => $account->id]);
+        $account = Account::factory()->create();
+        $wallet = Wallet::factory()->create(['account_id' => $account->id]);
         
         $incomeData = [
             'date' => '2023-10-10',
             'description' => 'Test Income',
             'partner_type' => 'customer',
-            'partner_customer' => 'Test Customer',
+            'partner_customer' => Customer::factory()->create()->id,
             'items' => [
-                ['account_id' => $account->id, 'type' => 'operational', 'transaction' => 'sales', 'amount' => 100, 'description' => 'Item description'],
+                ['account_id' => $account->id, 'type' => 'penjualan', 'transaction' => 'sales', 'amount' => 100, 'description' => 'Item description'],
             ],
             'payments' => [
                 ['wallet_id' => $wallet->id, 'type' => 'cash', 'amount' => 100, 'description' => 'Payment description'],
@@ -75,7 +78,7 @@ class IncomeControllerTest extends TestCase
             'date' => $income->date,
             'description' => $newDescription,
             'partner_type' => 'customer',
-            'partner_customer' => 'Updated Customer'
+            'partner_customer' => Customer::factory()->create()->id,
         ]);
 
         $response->assertStatus(200);

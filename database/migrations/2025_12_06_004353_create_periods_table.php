@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('periods', function (Blueprint $table) {
-            $table->integer('id', true);
+            $table->id();
             $table->date('start');
             $table->date('end');
         });

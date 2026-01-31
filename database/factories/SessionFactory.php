@@ -21,7 +21,7 @@ class SessionFactory extends Factory
             'employee_id' => Employee::factory(),
             'bed_id' => Bed::factory(),
             'order_time' => $this->faker->time(),
-            'reserved_time' => $this->faker->time(),
+            'reserved_time' => $this->faker->dateTime(),
             'payment' => 'walk-in',
             'date' => $this->faker->date(),
             'start' => $this->faker->time(),

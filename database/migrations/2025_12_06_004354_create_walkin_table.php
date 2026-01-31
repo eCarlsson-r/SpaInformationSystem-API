@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('walkin', function (Blueprint $table) {
-            $table->integer('id', true);
-            $table->string('treatment_id', 10);
+            $table->id();
+            $table->foreignId('treatment_id')->constrained('treatments')->cascadeOnUpdate()->cascadeOnDelete();
             $table->foreignId('customer_id')->constrained('customers')->cascadeOnUpdate()->cascadeOnDelete();
             $table->foreignId('sales_id')->constrained('sales')->cascadeOnUpdate()->cascadeOnDelete();
             $table->foreignId('session_id')->constrained('sessions')->cascadeOnUpdate()->cascadeOnDelete();

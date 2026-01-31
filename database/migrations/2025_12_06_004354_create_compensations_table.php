@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('compensations', function (Blueprint $table) {
-            $table->integer('id', true);
-            $table->integer('employee_id')->index('emp-code');
-            $table->integer('period_id')->index('gaji-periode');
+            $table->id();
+            $table->foreignId('employee_id')->constrained()->onUpdate('cascade')->onDelete('cascade');
+            $table->foreignId('period_id')->constrained()->onUpdate('cascade')->onDelete('cascade');
             $table->integer('base_salary');
             $table->integer('therapist_bonus');
             $table->integer('recruit_bonus');
@@ -23,8 +23,6 @@ return new class extends Migration
             $table->integer('deduction');
             $table->string('deduction_description', 500)->nullable();
             $table->integer('total');
-
-            $table->foreign(['period_id'], 'compensations_ibfk_1')->references(['id'])->on('periods')->onUpdate('cascade')->onDelete('cascade');
         });
     }
 

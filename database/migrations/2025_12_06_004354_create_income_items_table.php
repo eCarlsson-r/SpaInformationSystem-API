@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('income_items', function (Blueprint $table) {
-            $table->integer('id', true);
+            $table->id();
             $table->foreignId('income_id')->constrained()->onUpdate('cascade')->onDelete('cascade');
             $table->string('type', 10);
             $table->string('transaction', 500);
             $table->integer('amount');
-            $table->string('description', 200);
+            $table->text('description');
         });
     }
 
