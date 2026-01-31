@@ -42,7 +42,6 @@ class SessionControllerTest extends TestCase
 
         $response = $this->postJson('/api/session', $sessionData);
 
-        print_r($response->json());
         $response->assertStatus(201); 
         $this->assertDatabaseHas('sessions', [
             'customer_id' => $sessionData['customer_id'],

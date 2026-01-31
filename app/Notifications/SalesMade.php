@@ -6,8 +6,11 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Notifications\Channels\WebPushChannel;
+use Illuminate\Notifications\Channels\WebPushMessage;
 
-class SalesMade extends Notification
+class SalesMade extends Notification implements ShouldBroadcastNow
 {
     use Queueable;
 
