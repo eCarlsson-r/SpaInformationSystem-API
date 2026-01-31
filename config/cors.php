@@ -19,7 +19,13 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [ENV('POS_URL'), ENV('STORE_URL'), 'http://localhost', 'http://localhost:8000', 'http://localhost:8080'],
+    'allowed_origins' => [
+        'https://' . env('POS_URL', 'carlsson-spa-cashier.vercel.app'),
+        'https://' . env('STORE_URL', 'carlsson-spa-booking.vercel.app'),
+        'http://localhost',
+        'http://localhost:8000',
+        'http://localhost:8080'
+    ],
 
     'allowed_origins_patterns' => [],
 
