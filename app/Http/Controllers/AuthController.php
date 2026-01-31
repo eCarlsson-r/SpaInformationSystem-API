@@ -20,12 +20,12 @@ class AuthController extends Controller
         $user = User::where('username', $request->username)->first();
 
         if (auth()->attempt($credentials)) {
-            if ($request->header('Origin') === 'http://localhost:3001' && $user->type == 'CUSTOMER') {
+            if ($request->header('Origin') === env('STORE_URL') && $user->type == 'CUSTOMER') {
                 $customer = Customer::where('user_id', $user->id)->first();
                 $token = auth()->user()->createToken('web-token')->plainTextToken;
                 if ($customer) $user->customer = $customer;
                 return response()->json(['data' => $user, 'token' => $token, 'type' => $user->type], 200);
-            } else if ($request->header('Origin') === 'http://localhost:3000' && $user->type != 'CUSTOMER') {
+            } else if ($request->header('Origin') === env('POS_URL') && $user->type != 'CUSTOMER') {
                 $employee = Employee::where('user_id', $user->id)->first();
                 $token = auth()->user()->createToken('admin-token')->plainTextToken;
                 if ($employee) $user->employee = $employee;
@@ -45,9 +45,9 @@ class AuthController extends Controller
 
     public function user(Request $request)
     {
-        if ($request->header('Origin') === 'http://localhost:3001' && $request->user()->type == 'CUSTOMER') {
+        if ($request->header('Origin') === env('STORE_URL') && $request->user()->type == 'CUSTOMER') {
             return $request->user()->load('customer');
-        } else if ($request->header('Origin') === 'http://localhost:3000' && $request->user()->type != 'CUSTOMER') {
+        } else if ($request->header('Origin') === env('POS_URL') && $request->user()->type != 'CUSTOMER') {
             return $request->user()->load('employee');
         }
     }
