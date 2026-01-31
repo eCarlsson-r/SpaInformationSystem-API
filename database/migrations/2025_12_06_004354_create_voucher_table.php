@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('voucher', function (Blueprint $table) {
-            $table->string('id', 20)->primary();
-            $table->string('treatment_id', 10);
+            $table->string('id', 10)->primary();
+            $table->foreignId('treatment_id')->constrained('treatments')->cascadeOnUpdate()->cascadeOnDelete();
             $table->date('register_date');
             $table->time('register_time');
             $table->foreignId('customer_id')->nullable()->constrained('customers')->cascadeOnUpdate()->cascadeOnDelete();

@@ -9,11 +9,9 @@ class Category extends Model
 {
     use HasFactory;
     protected $table = 'categories';
-    public $incrementing = false;
     public $timestamps = false;
 
     protected $fillable = [
-        'id',
         'name',
         'description',
         'i18n',
@@ -27,7 +25,6 @@ class Category extends Model
         'id'
     ];
 
-    // app/Models/Treatment.php
     protected static function booted()
     {
         static::saved(fn () => event(new \App\Events\EntityUpdated('categories')));

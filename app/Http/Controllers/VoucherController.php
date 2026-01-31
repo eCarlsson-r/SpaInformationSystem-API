@@ -210,10 +210,10 @@ class VoucherController extends Controller
             } else {
                 $voucher = collect();
                 for ($i=$start; $i <= $end; $i++) {
-                    $voucherCode = $treatment.sprintf('%06d', $i);
+                    $voucherCode = sprintf('%04d', $treatment).sprintf('%06d', $i);
                     $voucher = Voucher::create([
                         "id" => $voucherCode,
-                        "treatment_id" => $treatmentInfo->first()->id,
+                        "treatment_id" => $treatment,
                         "register_date" => $date,
                         "register_time" => $time,
                     ]);

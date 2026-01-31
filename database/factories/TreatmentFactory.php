@@ -24,6 +24,7 @@ class TreatmentFactory extends Factory
             'voucher_normal_quantity' => 1,
             'voucher_purchase_quantity' => 1,
             'minimum_quantity' => 1,
+            'room' => json_encode(["VIPSG","VIPCP","STDRM"]),
             'body_img' => $this->faker->imageUrl(),
             'icon_img' => $this->faker->imageUrl()
         ];

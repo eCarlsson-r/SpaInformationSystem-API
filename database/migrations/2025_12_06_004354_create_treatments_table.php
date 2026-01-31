@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('treatments', function (Blueprint $table) {
             $table->id();
             $table->string('name', 50);
-            $table->string('description', 5000)->default('');
+            $table->string('description', 5000);
             $table->integer('price');
             $table->integer('duration');
-            $table->string('category_id', 10)->index('category_id');
-            $table->string('room', 50)->default('["VIPSG","VIPCP","STDRM"]');
+            $table->foreignId('category_id')->constrained('categories')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->json('room');
             $table->string('applicable_days', 100);
             $table->time('applicable_time_end');
             $table->time('applicable_time_start');
@@ -27,8 +27,6 @@ return new class extends Migration
             $table->integer('voucher_purchase_quantity')->nullable();
             $table->text('body_img');
             $table->text('icon_img');
-
-            $table->foreign('category_id')->references('id')->on('categories')->onUpdate('cascade')->onDelete('cascade');
         });
     }
 
