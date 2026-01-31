@@ -10,6 +10,7 @@ use App\Models\Journal;
 use App\Models\Voucher;
 use App\Models\Walkin;
 use App\Models\Wallet;
+use App\Notifications\SalesMade;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -62,8 +63,10 @@ class SalesController extends Controller
         $sales->records()->createMany($request->records);
 
         if ($sales) {
-            Customer::find($request->customer_id)->user->notify(new SalesMade($sales));
-            User::find(1)->notify(new SalesMade($sales));
+            $customer = Customer::find($request->customer_id)->user;
+            if ($customer) $customer->notify(new SalesMade($sales));
+            $admin = User::find(1);
+            if ($admin) $admin->notify(new SalesMade($sales));
             return response()->json($sales, 201);
         } else {
             return response()->json(['message' => 'Failed to create sales'], 500);

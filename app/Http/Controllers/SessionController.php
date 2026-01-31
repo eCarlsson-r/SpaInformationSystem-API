@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Journal;
 use App\Models\Walkin;
 use App\Models\Voucher;
+use App\Notifications\SessionMade;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
