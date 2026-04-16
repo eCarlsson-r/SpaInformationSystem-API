@@ -36,6 +36,11 @@ use App\Http\Controllers\TreatmentController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\WalkinController;
 use App\Http\Controllers\WalletController;
+use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\SentimentController;
+use App\Http\Controllers\RecommendationController;
+use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\ConflictController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/subscribe', [AuthController::class, 'subscribe']);
@@ -52,6 +57,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('session', SessionController::class);
     Route::post('/session/{session}/start', [SessionController::class, 'start']);
     Route::post('/session/{session}/finish', [SessionController::class, 'finish']);
+    // Alias for integration tests that use plural form
+    Route::post('/sessions/{session}/finish', [SessionController::class, 'finish']);
 
     Route::apiResource('journal', JournalController::class);
     Route::apiResource('income', IncomeController::class);
@@ -86,6 +93,26 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('cart', CartController::class);
     Route::post('/cart/session', [CartController::class, 'bookSession']);
     Route::post('/cart/voucher', [CartController::class, 'buyVoucher']);
+
+    // AI Features
+    Route::post('/feedback', [FeedbackController::class, 'store']);
+    Route::get('/ai/sentiment/dashboard', [SentimentController::class, 'dashboard']);
+    Route::get('/ai/sentiment/summary', [SentimentController::class, 'summary']);
+
+    // Recommendations (Requirements: 1.1, 1.4, 2.1, 2.2, 3.2)
+    Route::get('/ai/recommendations', [RecommendationController::class, 'index']);
+    Route::get('/ai/recommendations/pos', [RecommendationController::class, 'pos']);
+    Route::post('/ai/recommendations/invalidate/{customerId}', [RecommendationController::class, 'invalidate']);
+
+    // Chatbot (Requirements: 4.2, 4.5, 5.2, 5.4)
+    Route::post('/ai/chat', [ChatbotController::class, 'customer']);
+    Route::post('/ai/chat/staff', [ChatbotController::class, 'staff']);
+
+    // Conflicts (Requirements: 7.3, 7.4, 7.6, 8.2, 8.3)
+    Route::get('/conflicts', [ConflictController::class, 'index']);
+    Route::get('/conflicts/pending', [ConflictController::class, 'pending']);
+    Route::post('/conflicts/{id}/dismiss', [ConflictController::class, 'dismiss']);
+    Route::post('/bookings/{id}/reschedule', [ConflictController::class, 'reschedule']);
 });
 
 Route::get('/banner', [BannerController::class, 'index']);

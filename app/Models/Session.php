@@ -32,7 +32,8 @@ class Session extends Model
     ];
 
     protected $attributes = [
-        'status' => 'waiting'
+        'status'  => 'waiting',
+        'payment' => 'walk-in',
     ];
 
     public function treatment()

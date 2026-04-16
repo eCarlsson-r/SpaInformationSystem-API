@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\FeedbackPrompt;
 use App\Models\User;
 use App\Models\Session;
 use App\Models\Employee;
@@ -196,6 +197,19 @@ class SessionController extends Controller
         ]);
 
         if ($session) {
+            // Requirement 9.1: broadcast FeedbackPrompt to the customer's private channel
+            if ($session->customer_id) {
+                try {
+                    broadcast(new FeedbackPrompt($session, (int) $session->customer_id));
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('SessionController: Failed to broadcast FeedbackPrompt', [
+                        'session_id'  => $session->id,
+                        'customer_id' => $session->customer_id,
+                        'error'       => $e->getMessage(),
+                    ]);
+                }
+            }
+
             return response()->json($session, 200);
         } else {
             return response()->json(['message' => 'Failed to finish session'], 500);
