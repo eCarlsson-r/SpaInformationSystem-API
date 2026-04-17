@@ -62,7 +62,15 @@ class RecommendationService
             ->get();
 
         // Fetch available treatments at the branch — Requirement 1.6
-        $availableTreatments = Treatment::where('status', 'active')->get();
+        $today = Carbon::now()->format('D');
+        $availableTreatments = Treatment::where(function($q) use ($today) {
+            $q->where('applicable_days', $today)
+              ->orWhere('applicable_days', 'LIKE', "{$today},%")
+              ->orWhere('applicable_days', 'LIKE', "%,{$today}")
+              ->orWhere('applicable_days', 'LIKE', "%,{$today},%");
+        })
+            ->whereTime('applicable_time_start', '<=', Carbon::now())
+            ->whereTime('applicable_time_end', '>=', Carbon::now())->get();
 
         // Requirement 1.3 / 2.3: fall back to popular treatments if < 3 bookings
         if ($recentBookings->count() < 3) {

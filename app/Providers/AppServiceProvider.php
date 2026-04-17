@@ -13,7 +13,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register AI Translation Service
+        $this->app->bind(\App\Services\AITranslationServiceInterface::class, \App\Services\AITranslationService::class);
     }
 
     /**

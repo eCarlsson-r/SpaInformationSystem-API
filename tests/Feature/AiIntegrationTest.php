@@ -320,7 +320,7 @@ class AiIntegrationTest extends TestCase
             $channelNames = array_map(fn ($ch) => $ch->name, $channels);
 
             return $event->conflict->id === $conflict->id
-                && in_array("branch.{$branch->id}", $channelNames, true);
+                && in_array("private-branch.{$branch->id}", $channelNames, true);
         });
     }
 
@@ -380,7 +380,7 @@ class AiIntegrationTest extends TestCase
             $channelNames = array_map(fn ($ch) => $ch->name, $channels);
 
             return $event->conflict->id === $conflict->id
-                && in_array("customer.{$customer->id}", $channelNames, true);
+                && in_array("private-customer.{$customer->id}", $channelNames, true);
         });
 
         // The broadcast dispatch must complete well within the 10-second delivery window
@@ -424,7 +424,7 @@ class AiIntegrationTest extends TestCase
 
             return $event->session->id === $session->id
                 && $event->customerId === $customer->id
-                && in_array("customer.{$customer->id}", $channelNames, true);
+                && in_array("private-customer.{$customer->id}", $channelNames, true);
         });
     }
 
@@ -633,7 +633,7 @@ class AiIntegrationTest extends TestCase
 
             return $event->feedback->id === $feedback->id
                 && $event->branchId === $branch->id
-                && in_array("branch.{$branch->id}", $channelNames, true);
+                && in_array("private-branch.{$branch->id}", $channelNames, true);
         });
     }
 }
