@@ -32,11 +32,12 @@ SpaSystem API is more than just a POS backend; it's a comprehensive Business Ope
 -   **Capacity Intelligent**: Real-time lookups for available rooms and therapists.
 -   **Dynamic Catalog**: Managed categories, treatments, and promotional banners.
 
-### 👤 Management & Security
+### 🧠 GenAI Intelligence
 
--   **Sanctum Powered**: Secure, token-based API authentication.
--   **Granular Resources**: Full CRUD control over Branches, Employees, Customers, and Suppliers.
--   **Smart Cart System**: Integrated booking and voucher purchase through a unified cart logic.
+-   **Hybrid Driver Architecture**: Seamlessly switch between **OpenAI**, **Ollama**, and **LocalAI**.
+-   **Automated Copywriting**: High-performance description generation for treatments, branches, and banners.
+-   **Local Image Synthesis**: Support for Stable Diffusion via LocalAI for key-less, private image generation.
+-   **Flexible Configuration**: Dedicated drivers for text and images to optimize cost and privacy.
 
 ## 🛠️ Tech Stack
 
@@ -46,6 +47,7 @@ SpaSystem API is more than just a POS backend; it's a comprehensive Business Ope
 -   **Real-time**: Laravel Reverb + Echo
 -   **Hardware**: ZKTeco SDK Integration
 -   **Notification**: Laravel WebPush
+-   **AI Engines**: OpenAI (GPT-4o/DALL-E 3) & Local (Ollama/Gemma 2/LocalAI)
 
 ## 🏁 Getting Started
 

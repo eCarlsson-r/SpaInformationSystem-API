@@ -32,4 +32,18 @@ return [
         'api_key' => env('OPENAI_API_KEY'),
     ],
 
+    'ollama' => [
+        'url' => env('OLLAMA_URL', 'http://localhost:11434'),
+        'model' => env('OLLAMA_MODEL', 'gemma2'),
+    ],
+
+    'localai' => [
+        'url' => env('LOCALAI_URL', 'http://localhost:8090'),
+        'text_model' => env('LOCALAI_TEXT_MODEL', 'gemma-2-9b'),
+        'image_model' => env('LOCALAI_IMAGE_MODEL', 'stablediffusion'),
+    ],
+
+    'ai_text_driver' => env('AI_TEXT_DRIVER', 'openai'),
+    'ai_image_driver' => env('AI_IMAGE_DRIVER', 'openai'),
+
 ];

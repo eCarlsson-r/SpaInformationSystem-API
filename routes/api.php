@@ -41,6 +41,7 @@ use App\Http\Controllers\SentimentController;
 use App\Http\Controllers\RecommendationController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\ConflictController;
+use App\Http\Controllers\ContentGenerationController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/subscribe', [AuthController::class, 'subscribe']);
@@ -113,6 +114,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/conflicts/pending', [ConflictController::class, 'pending']);
     Route::post('/conflicts/{id}/dismiss', [ConflictController::class, 'dismiss']);
     Route::post('/bookings/{id}/reschedule', [ConflictController::class, 'reschedule']);
+
+    // Content Generation
+    Route::post('/ai/generate-description', [ContentGenerationController::class, 'generateDescription']);
+    Route::post('/ai/generate-image', [ContentGenerationController::class, 'generateImage']);
 });
 
 Route::get('/banner', [BannerController::class, 'index']);
