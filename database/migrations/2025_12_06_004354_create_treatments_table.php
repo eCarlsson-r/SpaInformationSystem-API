@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('treatments', function (Blueprint $table) {
             $table->id();
             $table->string('name', 50);
-            $table->string('description', 5000);
+            $table->text('description');
             $table->integer('price');
             $table->integer('duration');
             $table->foreignId('category_id')->constrained('categories')->cascadeOnUpdate()->cascadeOnDelete();
