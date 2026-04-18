@@ -20,7 +20,7 @@ class RoomFactory extends Factory
         return [
             'name' => $this->faker->word(),
             'description' => $this->faker->sentence(),
-            'image' => $this->faker->imageUrl(),
+            'image' => null,
             'branch_id' => Branch::factory(),
         ];
     }

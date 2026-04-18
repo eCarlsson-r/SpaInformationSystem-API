@@ -19,8 +19,8 @@ return new class extends Migration
             $table->string('email', 500)->nullable();
             $table->string('phone', 100)->nullable();
             $table->string('mobile', 100)->nullable();
-            $table->tinyInteger('discount')->nullable();
-            $table->tinyInteger('commission')->nullable();
+            $table->decimal('discount', 8, 2)->nullable();
+            $table->decimal('commission', 8, 2)->nullable();
             $table->integer('liability_account')->nullable();
         });
     }

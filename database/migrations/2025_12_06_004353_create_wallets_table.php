@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name', 100);
             $table->string('bank_account_number', 50)->nullable();
-            $table->string('bank_id', 20)->nullable();
+            $table->foreignId('bank_id')->constrained('bank')->cascadeOnUpdate()->cascadeOnDelete();
             $table->foreignId('account_id')->constrained('accounts')->cascadeOnUpdate()->cascadeOnDelete();
             $table->boolean('edc_machine')->default(false);
         });

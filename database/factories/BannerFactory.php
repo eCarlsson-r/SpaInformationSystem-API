@@ -17,7 +17,7 @@ class BannerFactory extends Factory
     public function definition(): array
     {
         return [
-            'image' => $this->faker->image,
+            'image' => null,
             'introduction' => $this->faker->sentence,
             'title' => $this->faker->sentence,
             'subtitle' => $this->faker->sentence,

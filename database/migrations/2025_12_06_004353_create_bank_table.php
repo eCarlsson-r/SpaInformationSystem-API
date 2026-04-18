@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('bank', function (Blueprint $table) {
-            $table->string('id', 20)->unique('bank-code');
+            $table->id();
+            $table->string('code', 20)->unique();
             $table->string('name', 100);
         });
     }

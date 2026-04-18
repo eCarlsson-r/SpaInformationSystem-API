@@ -239,8 +239,8 @@ class DatabaseSeeder extends Seeder
     private function seedHRD($employees)
     {
         $shifts = [
-            ['name' => 'Morning', 'start' => '09:00:00', 'end' => '17:00:00'],
-            ['name' => 'Evening', 'start' => '13:00:00', 'end' => '21:00:00'],
+            ['id'=> 'M', 'name' => 'Morning', 'start_time' => '09:00:00', 'end_time' => '17:00:00'],
+            ['id'=> 'A', 'name' => 'Afternoon', 'start_time' => '13:00:00', 'end_time' => '21:00:00'],
         ];
         foreach ($shifts as $s) Shift::factory()->create($s);
 
@@ -250,9 +250,9 @@ class DatabaseSeeder extends Seeder
                 Attendance::factory()->create([
                     'employee_id' => $emp->id,
                     'date' => Carbon::now()->subDays($i)->toDateString(),
-                    'check_in' => '09:00:00',
-                    'check_out' => '17:00:00',
-                    'status' => 'present'
+                    'clock_in' => '09:00:00',
+                    'clock_out' => '17:00:00',
+                    'shift_id' => 'M'
                 ]);
             }
         }
@@ -261,6 +261,7 @@ class DatabaseSeeder extends Seeder
     private function seedPromotions($accounts, $treatments)
     {
         Discount::create([
+            'code' => 'WLCOMDISCN',
             'name' => 'Welcome Discount',
             'type' => 'percentage',
             'percent' => 10,
@@ -332,6 +333,7 @@ class DatabaseSeeder extends Seeder
             'quantity' => 1,
             'price' => $treatment->price,
             'total_price' => $treatment->price,
+            'discount' => 0,
             'redeem_type' => 'walk-in'
         ]);
 
@@ -350,10 +352,10 @@ class DatabaseSeeder extends Seeder
     private function seedFinancials($branch, $accounts)
     {
         $income = Income::create([
-            'branch_id' => $branch->id,
+            'journal_reference' => 'INC-' . time(),
             'date' => Carbon::now()->toDateString(),
-            'total' => 500000,
-            'account_id' => $accounts['cash_bca']->id,
+            'partner_type' => 'Walk-in',
+            'partner' => 1,
             'description' => 'Daily Sales Summary'
         ]);
 
@@ -366,33 +368,32 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $expense = Expense::create([
-            'branch_id' => $branch->id,
+            'journal_reference' => 'EXP-' . time(),
             'date' => Carbon::now()->toDateString(),
-            'total' => 100000,
-            'account_id' => $accounts['cash_bca']->id,
+            'partner_type' => 'Supplier',
+            'partner' => 'General Store',
             'description' => 'Office Supplies'
         ]);
 
         ExpenseItem::create([
             'expense_id' => $expense->id,
             'account_id' => $accounts['expense_utility']->id,
-            'type' => 'General',
             'amount' => 100000,
             'description' => 'Cleaning materials'
         ]);
 
         $journal = Journal::create([
-            'branch_id' => $branch->id,
+            'reference' => 'JRN-' . time(),
             'date' => Carbon::now()->toDateString(),
-            'description' => 'Opening Balance',
-            'total' => 1000000
+            'description' => 'Opening Balance'
         ]);
 
         JournalRecord::create([
             'journal_id' => $journal->id,
             'account_id' => $accounts['cash_tunai']->id,
             'debit' => 1000000,
-            'credit' => 0
+            'credit' => 0,
+            'description' => 'Opening Balance'
         ]);
     }
 
@@ -407,11 +408,6 @@ class DatabaseSeeder extends Seeder
                 'comment' => 'Excellent service!'
             ]);
         }
-
-        ChatSession::create([
-            'customer_id' => $customer->id,
-            'status' => 'active'
-        ]);
     }
 
     private function seedWallets($accounts)
@@ -422,7 +418,7 @@ class DatabaseSeeder extends Seeder
             'bank_account_number' => '1234567890',
             'bank_id' => $bank->id,
             'account_id' => $accounts['cash_bca']->id,
-            'edc_machine' => 'BCA-001'
+            'edc_machine' => true
         ]);
     }
 }

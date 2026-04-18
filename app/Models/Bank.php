@@ -9,11 +9,10 @@ class Bank extends Model
 {
     use HasFactory;
     protected $table = 'bank';
-    public $incrementing = false;
     public $timestamps = false;
     
     protected $fillable = [
-        'id',
+        'code',
         'name'
     ];
 

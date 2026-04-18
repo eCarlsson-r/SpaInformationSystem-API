@@ -12,7 +12,7 @@ class BankFactory extends Factory
     public function definition()
     {
         return [
-            'id' => $this->faker->unique()->numerify('###'),
+            'code' => $this->faker->unique()->numerify('###'),
             'name' => $this->faker->company,
         ];
     }
