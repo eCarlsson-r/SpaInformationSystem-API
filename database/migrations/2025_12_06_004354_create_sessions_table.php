@@ -22,8 +22,8 @@ return new class extends Migration
             $table->time('start')->nullable();
             $table->time('end')->nullable();
             $table->string('status', 10);
-            $table->string('treatment_id', 10);
-            $table->foreignId('employee_id')->nullable()->constrained('employees')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('treatment_id')->constrained('treatments')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('employee_id')->constrained('employees')->cascadeOnUpdate()->cascadeOnDelete();
         });
     }
 

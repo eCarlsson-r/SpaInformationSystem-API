@@ -38,7 +38,7 @@ class ConflictController extends Controller
     {
         $user = $request->user();
 
-        if ($user->type !== 'MANAGER') {
+        if ($user->type !== 'ADMIN') {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 

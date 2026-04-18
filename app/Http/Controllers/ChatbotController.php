@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ChatSession;
+use App\Services\AITranslationService;
 use App\Services\ChatbotService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,11 +14,16 @@ use Illuminate\Http\Request;
  * Handles natural-language chat for both customer booking assistant
  * and staff operational query flows.
  *
- * Requirements: 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7
+ * Requirements: 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 8.1, 8.5
  */
 class ChatbotController extends Controller
 {
-    public function __construct(private readonly ChatbotService $service) {}
+    use ResolvesLocale;
+
+    public function __construct(
+        private readonly ChatbotService $service,
+        private readonly AITranslationService $translator,
+    ) {}
 
     /**
      * POST /api/ai/chat
@@ -50,6 +56,10 @@ class ChatbotController extends Controller
         $history[] = ['role' => 'assistant', 'content' => json_encode($response)];
         $chatSession->update(['messages' => array_slice($history, -10)]);
 
+        // Translate AI-generated text fields for the requested locale
+        $locale = $this->resolveLocale($request);
+        $response = $this->translateResponse($response, $locale);
+
         return response()->json($response);
     }
 
@@ -76,6 +86,24 @@ class ChatbotController extends Controller
 
         $response = $this->service->processStaffQuery($validated['query'], $staffContext);
 
+        // Translate AI-generated text fields for the requested locale
+        $locale = $this->resolveLocale($request);
+        $response = $this->translateResponse($response, $locale);
+
         return response()->json($response);
+    }
+
+    /**
+     * Translate user-facing text fields in a chatbot response.
+     */
+    private function translateResponse(array $response, string $locale): array
+    {
+        if (isset($response['formattedAnswer'])) {
+            $response['formattedAnswer'] = $this->translator->translate($response['formattedAnswer'], $locale);
+        }
+        if (isset($response['message'])) {
+            $response['message'] = $this->translator->translate($response['message'], $locale);
+        }
+        return $response;
     }
 }

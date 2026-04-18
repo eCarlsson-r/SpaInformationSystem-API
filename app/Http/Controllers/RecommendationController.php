@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\AITranslationService;
 use App\Services\RecommendationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,11 +14,16 @@ use Illuminate\Support\Facades\Cache;
  * Exposes AI treatment recommendation endpoints for SpaBooking (customer)
  * and SpaCashier (POS staff).
  *
- * Requirements: 1.1, 1.4, 1.5, 2.1, 2.2, 2.5, 3.2
+ * Requirements: 1.1, 1.4, 1.5, 2.1, 2.2, 2.5, 3.2, 8.1, 8.5
  */
 class RecommendationController extends Controller
 {
-    public function __construct(private readonly RecommendationService $service) {}
+    use ResolvesLocale;
+
+    public function __construct(
+        private readonly RecommendationService $service,
+        private readonly AITranslationService $translator,
+    ) {}
 
     /**
      * GET /api/ai/recommendations
@@ -38,6 +44,10 @@ class RecommendationController extends Controller
             (int) $validated['branch_id'],
             'customer'
         );
+
+        // Translate rationale fields for the requested locale
+        $locale = $this->resolveLocale($request);
+        $recommendations = $this->translateRationales($recommendations, $locale);
 
         return response()->json($recommendations);
     }
@@ -61,6 +71,10 @@ class RecommendationController extends Controller
             (int) $validated['branch_id'],
             'pos'
         );
+
+        // Translate rationale fields for the requested locale
+        $locale = $this->resolveLocale($request);
+        $recommendations = $this->translateRationales($recommendations, $locale);
 
         return response()->json($recommendations);
     }
@@ -86,5 +100,18 @@ class RecommendationController extends Controller
         }
 
         return response()->json(['message' => 'Cache invalidated.']);
+    }
+
+    /**
+     * Translate the rationale text in each recommendation item.
+     */
+    private function translateRationales(array $recommendations, string $locale): array
+    {
+        return array_map(function (array $item) use ($locale) {
+            if (isset($item['rationale'])) {
+                $item['rationale'] = $this->translator->translate($item['rationale'], $locale);
+            }
+            return $item;
+        }, $recommendations);
     }
 }

@@ -59,7 +59,7 @@ class AiIntegrationTest extends TestCase
     /** Create a manager User with an Employee linked to the given branch and authenticate. */
     private function actAsManager(Branch $branch): User
     {
-        $user = User::factory()->create(['type' => 'MANAGER']);
+        $user = User::factory()->create(['type' => 'ADMIN']);
         Employee::factory()->create(['user_id' => $user->id, 'branch_id' => $branch->id]);
         Sanctum::actingAs($user);
         return $user;

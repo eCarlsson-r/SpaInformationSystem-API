@@ -32,7 +32,7 @@ class ConflictControllerTest extends TestCase
     /** Create a manager User with an Employee linked to the given branch. */
     private function createManager(Branch $branch): User
     {
-        $user = User::factory()->create(['type' => 'MANAGER']);
+        $user = User::factory()->create(['type' => 'ADMIN']);
         Employee::factory()->create(['user_id' => $user->id, 'branch_id' => $branch->id]);
         return $user;
     }

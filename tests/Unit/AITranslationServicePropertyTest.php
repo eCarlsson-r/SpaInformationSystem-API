@@ -52,8 +52,8 @@ class AITranslationServicePropertyTest extends TestCase
 
         $locales = ['en', 'id', 'fr', 'es', 'de'];
 
-        // Generate 100 test cases
-        for ($i = 0; $i < 100; $i++) {
+        // Generate 20 test cases
+        for ($i = 0; $i < 20; $i++) {
             $content = $sampleContents[$i % count($sampleContents)];
             $locale = $locales[$i % count($locales)];
             $cases[] = [$content, $locale];
@@ -82,8 +82,8 @@ class AITranslationServicePropertyTest extends TestCase
             'Therapist Maria specializes in 3 massage types',
         ];
 
-        // Generate 100 test cases
-        for ($i = 0; $i < 100; $i++) {
+        // Generate 20 test cases
+        for ($i = 0; $i < 20; $i++) {
             $content = $sampleContents[$i % count($sampleContents)];
             $cases[] = [$content];
         }

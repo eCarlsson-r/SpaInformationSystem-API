@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Feedback;
 use App\Models\Session;
+use App\Services\AITranslationService;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Log;
  */
 class SentimentController extends Controller
 {
+    use ResolvesLocale;
     /**
      * OpenAI request timeout in seconds.
      */
@@ -36,13 +38,15 @@ class SentimentController extends Controller
     private const RECENT_NEGATIVE_LIMIT = 5;
 
     private Client $httpClient;
+    private AITranslationService $translator;
 
-    public function __construct(?Client $httpClient = null)
+    public function __construct(?Client $httpClient = null, ?AITranslationService $translator = null)
     {
         $this->httpClient = $httpClient ?? new Client([
             'base_uri' => 'https://api.openai.com',
             'timeout'  => self::OPENAI_TIMEOUT,
         ]);
+        $this->translator = $translator ?? app(AITranslationService::class);
     }
 
     /**
@@ -69,7 +73,7 @@ class SentimentController extends Controller
         $user = $request->user();
 
         // Requirement 11.1: manager role only
-        if (strtoupper($user->type) !== 'MANAGER') {
+        if (strtoupper($user->type) !== 'ADMIN') {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -138,7 +142,7 @@ class SentimentController extends Controller
         $user = $request->user();
 
         // Requirement 11.1: manager role only
-        if (strtoupper($user->type) !== 'MANAGER') {
+        if (strtoupper($user->type) !== 'ADMIN') {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -168,6 +172,10 @@ class SentimentController extends Controller
         }
 
         $summary = $this->generateAiSummary($records->toArray());
+
+        // Translate the summary for the requested locale
+        $locale = $this->resolveLocale($request);
+        $summary = $this->translator->translate($summary, $locale);
 
         return response()->json(['summary' => $summary]);
     }
