@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('treatment_id')->constrained('treatments')->cascadeOnUpdate()->cascadeOnDelete();
             $table->foreignId('customer_id')->constrained('customers')->cascadeOnUpdate()->cascadeOnDelete();
             $table->foreignId('sales_id')->constrained('sales')->cascadeOnUpdate()->cascadeOnDelete();
-            $table->foreignId('session_id')->constrained('sessions')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('session_id')->nullable()->constrained('sessions')->cascadeOnUpdate()->cascadeOnDelete();
         });
     }
 

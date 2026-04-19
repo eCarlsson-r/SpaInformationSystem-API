@@ -153,7 +153,7 @@ class DashboardController extends Controller
             "active_sessions" => Session::where('date', $date)->where('status', 'ongoing')->count(),
             "completed_sessions" => 0,
             "sessions_improve" => 0,
-            "today_sales" => Sales::where('date', $date)->where('income_id', '>', 0)->sum('total'),
+            "today_sales" => Sales::where('date', $date)->where('income_id', '>', 0)->sum('total') ?? 0,
             "hot_treatment" => Session::join('treatments', 'sessions.treatment_id', '=', 'treatments.id')
                 ->whereMonth('date', date('m', strtotime($date)))
                 ->whereYear('date', date('Y', strtotime($date)))
@@ -192,11 +192,17 @@ class DashboardController extends Controller
             ->orderByRaw('year DESC, month DESC')
             ->get();
 
-        if ($vouchersSold[0]["year"]==date("Y") && $vouchersSold[0]["month"]==date("m")) {
-            $metadata["voucher_sold"] = $vouchersSold[0]["vouchers"];
-            $metadata["voucher_improve"] = $vouchersSold[0]["vouchers"]-$vouchersSold[1]["vouchers"];
+        if ($vouchersSold->count() > 0) {
+            if ($vouchersSold[0]["year"] == date("Y") && $vouchersSold[0]["month"] == date("m")) {
+                $metadata["voucher_sold"] = $vouchersSold[0]["vouchers"];
+                $metadata["voucher_improve"] = $vouchersSold[0]["vouchers"] - ($vouchersSold[1]["vouchers"] ?? 0);
+            } else {
+                $metadata["voucher_sold"] = 0;
+                $metadata["voucher_improve"] = -($vouchersSold[0]["vouchers"]);
+            }
         } else {
-            $metadata["voucher_improve"] = 0-$vouchersSold[0]["vouchers"];
+            $metadata["voucher_sold"] = 0;
+            $metadata["voucher_improve"] = 0;
         }
 
         $metadata["today"] = Employee::getDailyReport($date);
