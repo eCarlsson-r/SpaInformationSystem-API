@@ -25,8 +25,8 @@ return new class extends Migration
             $table->integer('minimum_quantity');
             $table->integer('voucher_normal_quantity')->nullable();
             $table->integer('voucher_purchase_quantity')->nullable();
-            $table->text('body_img');
-            $table->text('icon_img');
+            $table->text('body_img')->nullable();
+            $table->text('icon_img')->nullable();
         });
     }
 
