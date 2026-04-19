@@ -20,8 +20,7 @@ class CustomerFactory extends Factory
             'place_of_birth' => $this->faker->city,
             'date_of_birth' => $this->faker->date(),
             'mobile' => $this->faker->phoneNumber,
-            'email' => $this->faker->email,
-            'liability_account' => \App\Models\Account::factory(),
+            'email' => $this->faker->email
         ];
     }
 }

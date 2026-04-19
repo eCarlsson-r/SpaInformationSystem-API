@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Sales;
 use App\Models\Branch;
+use App\Models\Customer;
+use App\Models\User;
 use App\Models\Income;
-use App\Models\IncomePayment;
 use App\Models\Journal;
 use App\Models\Voucher;
 use App\Models\Walkin;
-use App\Models\Wallet;
 use App\Notifications\SalesMade;
 use Illuminate\Http\Request;
 use Carbon\Carbon;

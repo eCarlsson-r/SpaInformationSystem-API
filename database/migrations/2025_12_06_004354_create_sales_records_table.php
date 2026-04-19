@@ -19,8 +19,8 @@ return new class extends Migration
             $table->integer('price');
             $table->integer('discount');
             $table->string('redeem_type', 10);
-            $table->string('voucher_start', 10)->default('');
-            $table->string('voucher_end', 10)->default('');
+            $table->string('voucher_start', 10)->nullable();
+            $table->string('voucher_end', 10)->nullable();
             $table->integer('total_price');
             $table->string('description', 500)->nullable();
         });

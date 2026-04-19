@@ -18,12 +18,11 @@ return new class extends Migration
             $table->string('address', 500)->nullable();
             $table->string('city', 50)->nullable();
             $table->string('country', 50)->nullable();
-            $table->string('place_of_birth', 50);
+            $table->string('place_of_birth', 50)->nullable();
             $table->date('date_of_birth')->nullable();
-            $table->string('mobile', 50);
-            $table->string('email', 100);
+            $table->string('mobile', 50)->nullable();
+            $table->string('email', 100)->nullable();
             $table->string('referral_code', 10)->nullable();
-            $table->foreignId('liability_account')->constrained('accounts')->cascadeOnUpdate()->cascadeOnDelete();
         });
     }
 
