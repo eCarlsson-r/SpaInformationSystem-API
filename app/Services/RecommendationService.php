@@ -194,9 +194,9 @@ PROMPT;
 
         return array_values(array_map(function ($treatmentId, $index) {
             return [
-                'treatment_id' => $treatmentId,
-                'rank'         => $index + 1,
-                'rationale'    => 'Popular treatment at this branch.',
+                'treatment' => Treatment::find($treatmentId),
+                'rank'      => $index + 1,
+                'rationale' => 'Popular treatment at this branch.',
             ];
         }, $popular, array_keys($popular)));
     }
