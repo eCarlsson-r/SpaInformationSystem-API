@@ -208,7 +208,7 @@ class VoucherController extends Controller
             if ($existingVouchers->count() > 0) {
                 return response()->json($existingVouchers, 200);
             } else {
-                $voucher = collect();
+                $voucherList = collect();
                 for ($i=$start; $i <= $end; $i++) {
                     $voucherCode = sprintf('%04d', $treatment).sprintf('%06d', $i);
                     $voucher = Voucher::create([
@@ -217,9 +217,9 @@ class VoucherController extends Controller
                         "register_date" => $date,
                         "register_time" => $time,
                     ]);
-                    $voucher->push($voucher);
+                    $voucherList->push($voucher);
                 }
-                return response()->json($voucher, 201);
+                return response()->json($voucherList, 201);
             }
         } else {
             return response()->json([

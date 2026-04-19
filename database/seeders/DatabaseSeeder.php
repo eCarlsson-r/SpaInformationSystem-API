@@ -121,7 +121,7 @@ class DatabaseSeeder extends Seeder
         $this->seedSessions($grandSpa, $customers, $categories, $staff['therapists']);
 
         // 13. OPERATIONAL (Sales & Vouchers)
-        $this->seedSalesAndVouchers($grandSpa, $demoCustomer, $categories, $staff['therapists'], $accounts);
+        $this->seedSales($grandSpa, $demoCustomer, $categories, $staff['therapists'], $accounts);
 
         // 14. FINANCIALS (Incomes & Expenses)
         $this->seedFinancials($grandSpa, $accounts);
@@ -311,7 +311,7 @@ class DatabaseSeeder extends Seeder
         }
     }
 
-    private function seedSalesAndVouchers($branch, $customer, $categories, $therapists, $accounts)
+    private function seedSales($branch, $customer, $categories, $therapists, $accounts)
     {
         $treatment = Treatment::first();
         
@@ -335,17 +335,6 @@ class DatabaseSeeder extends Seeder
             'total_price' => $treatment->price,
             'discount' => 0,
             'redeem_type' => 'walk-in'
-        ]);
-
-        Voucher::create([
-            'id' => strtoupper(Str::random(10)),
-            'customer_id' => $customer->id,
-            'treatment_id' => $treatment->id,
-            'register_date' => Carbon::now()->toDateString(),
-            'register_time' => Carbon::now()->toTimeString(),
-            'purchase_date' => Carbon::now()->toDateString(),
-            'amount' => $treatment->price,
-            'sales_id' => $sale->id
         ]);
     }
 

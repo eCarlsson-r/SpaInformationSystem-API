@@ -13,7 +13,7 @@ class WalkinController extends Controller
     public function index()
     {
         return Walkin::with(['customer', 'treatment'])
-        ->where('session_id', '0')
+        ->whereNull('session_id')
         ->get()
         ->map(function ($walkin) {
             return [
