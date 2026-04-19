@@ -96,12 +96,12 @@ class DatabaseSeeder extends Seeder
         $demoCustomer = Customer::factory()->create([
             'name' => 'Alice Johnson',
             'email' => 'alice@example.com',
-            'mobile' => '08123456789'
-        ]);
-        User::factory()->create([
-            'username' => 'alice@example.com',
-            'password' => Hash::make('password'),
-            'type' => 'CUSTOMER'
+            'mobile' => '08123456789',
+            'user_id' => User::factory()->create([
+                'username' => 'alice@example.com',
+                'password' => Hash::make('password'),
+                'type' => 'CUSTOMER'
+            ])->id
         ]);
 
         // 8. BANNERS
