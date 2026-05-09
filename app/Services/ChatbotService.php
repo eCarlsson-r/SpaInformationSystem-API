@@ -38,23 +38,23 @@ class ChatbotService
                 ->withHistory($messages)
                 ->prompt($message);
 
-            // $response is a StructuredAgentResponse — access like an array
-            $result = ['type' => $response['type'] ?? 'error'];
+            $type = $response['type'] ?? 'error';
 
-            if ($result['type'] === 'booking_intent' && isset($response['params'])) {
-                $result['params'] = $response['params'];
-            }
-
-            if ($result['type'] === 'clarification') {
-                $result['missingField'] = $response['missingField'] ?? null;
-                $result['message']      = $response['message'] ?? null;
-            }
-
-            if ($result['type'] === 'error') {
-                $result['message'] = $response['message'] ?? 'Unexpected response from assistant.';
-            }
-
-            return $result;
+            return match ($type) {
+                'booking_intent' => [
+                    'type'   => 'booking_intent',
+                    'params' => $response['params'],
+                ],
+                'clarification' => [
+                    'type'         => 'clarification',
+                    'missingField' => $response['missingField'] ?: null,
+                    'message'      => $response['message']      ?: null,
+                ],
+                default => [
+                    'type'    => 'error',
+                    'message' => $response['message'] ?: 'Unexpected response from assistant.',
+                ],
+            };
         } catch (\Throwable $e) {
             Log::warning('ChatbotService: Customer message processing failed', ['error' => $e->getMessage()]);
             return ['type' => 'error', 'message' => 'Assistant is temporarily unavailable.'];
@@ -80,22 +80,20 @@ class ChatbotService
         try {
             $response = (new StaffChatAgent)->prompt($prompt);
 
-            // $response is a StructuredAgentResponse — access like an array
-            $result = ['type' => $response['type'] ?? 'error'];
+            $type = $response['type'] ?? 'error';
 
-            if ($result['type'] === 'data_response') {
-                $result['intent']          = $response['intent']          ?? null;
-                $result['value']           = $response['value']           ?? null;
-                $result['period']          = $response['period']          ?? null;
-                $result['branch']          = $response['branch']          ?? null;
-                $result['formattedAnswer'] = $response['formattedAnswer'] ?? null;
+            if ($type === 'data_response') {
+                return [
+                    'type'            => 'data_response',
+                    'intent'          => $response['intent']          ?: null,
+                    'value'           => $response['value']           ?: null,
+                    'period'          => $response['period']          ?: null,
+                    'branch'          => $response['branch']          ?: null,
+                    'formattedAnswer' => $response['formattedAnswer'] ?: null,
+                ];
             }
 
-            if ($result['type'] === 'error') {
-                $result['message'] = $response['message'] ?? 'Unexpected response from assistant.';
-            }
-
-            return $result;
+            return ['type' => $type];
         } catch (\Throwable $e) {
             Log::warning('ChatbotService: Staff query processing failed', ['error' => $e->getMessage()]);
             return ['type' => 'error', 'message' => 'Assistant is temporarily unavailable.'];

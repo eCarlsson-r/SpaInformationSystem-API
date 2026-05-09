@@ -99,33 +99,20 @@ class AiIntegrationTest extends TestCase
         return compact('branch', 'room', 'bed', 'employee', 'treatment', 'customer', 'userC', 'session');
     }
 
-    /** Bind a RecommendationService whose HTTP client returns a canned AI response. */
+    /** Bind a RecommendationService that returns a canned AI response. */
     private function bindRecommendationServiceWithResponse(array $aiItems): void
     {
-        $json    = json_encode($aiItems);
-        $mock    = new MockHandler([
-            new Response(200, [], json_encode([
-                'choices' => [['message' => ['content' => $json]]],
-            ])),
-        ]);
-        $handler = HandlerStack::create($mock);
-        $client  = new Client(['handler' => $handler]);
-
-        $this->app->instance(RecommendationService::class, new RecommendationService($client));
+        $mock = \Mockery::mock(RecommendationService::class);
+        $mock->shouldReceive('getRecommendations')->andReturn($aiItems);
+        $this->app->instance(RecommendationService::class, $mock);
     }
 
-    /** Bind a ChatbotService whose HTTP client returns a canned AI response. */
+    /** Bind a ChatbotService that returns a canned AI response. */
     private function bindChatbotServiceWithResponse(string $aiJson): void
     {
-        $mock    = new MockHandler([
-            new Response(200, [], json_encode([
-                'choices' => [['message' => ['content' => $aiJson]]],
-            ])),
-        ]);
-        $handler = HandlerStack::create($mock);
-        $client  = new Client(['handler' => $handler]);
-
-        $this->app->instance(ChatbotService::class, new ChatbotService($client));
+        $mock = \Mockery::mock(ChatbotService::class);
+        $mock->shouldReceive('processCustomerMessage')->andReturn(json_decode($aiJson, true));
+        $this->app->instance(ChatbotService::class, $mock);
     }
 
     // =========================================================================

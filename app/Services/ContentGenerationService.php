@@ -10,54 +10,38 @@ use Laravel\Ai\Image;
 /**
  * ContentGenerationService
  *
- * Generates descriptions and images for spa content using the Laravel AI SDK.
- *
- * Text generation supports OpenAI and Ollama (configured via config/ai.php).
- * Image generation supports OpenAI (DALL-E 3) only — Ollama does not support images.
+ * Generates AI-powered descriptions and images for spa content using the
+ * Laravel AI SDK. Text generation uses the configured default provider
+ * (OpenAI by default, with Ollama as an alternative via config/ai.php).
+ * Image generation uses OpenAI DALL-E 3.
  */
 class ContentGenerationService
 {
-    private string $textDriver;
-    private string $imageDriver;
-
-    public function __construct()
-    {
-        $this->textDriver  = config('services.ai_text_driver', 'openai');
-        $this->imageDriver = config('services.ai_image_driver', 'openai');
-    }
-
     /**
-     * Generate a description for the given content type and fields.
+     * Generate a compelling description for a spa content type.
      *
-     * @param  string $type   e.g. 'treatment', 'room', 'branch'
-     * @param  array  $fields Key-value pairs describing the content.
-     * @return string The generated description.
+     * @param  string $type   e.g. "treatment", "room", "branch"
+     * @param  array  $fields Key-value pairs describing the content
+     * @return string The generated description (under 100 words)
      *
-     * @throws \Exception When the configured driver is unavailable.
+     * @throws \Throwable on generation failure
      */
     public function generateDescription(string $type, array $fields): string
     {
-        $fieldsJson = json_encode($fields, JSON_UNESCAPED_UNICODE);
+        $fieldsJson = json_encode($fields);
         $prompt     = "Generate a description for this {$type} with the following details: {$fieldsJson}";
 
-        // Resolve the provider for the Laravel AI SDK
-        $provider = $this->resolveTextProvider();
-
         try {
-            $response = (new ContentDescriptionAgent)->prompt(
-                $prompt,
-                provider: $provider,
-            );
+            $description = trim((string) (new ContentDescriptionAgent)->prompt($prompt));
 
-            $text = trim((string) $response);
-
-            if (empty($text)) {
+            if (empty($description)) {
                 throw new \RuntimeException('AI agent returned an empty description.');
             }
 
-            return $text;
+            return $description;
         } catch (\Throwable $e) {
-            Log::error("ContentGenerationService ({$this->textDriver}): Description generation failed", [
+            Log::error('ContentGenerationService: Description generation failed', [
+                'type'  => $type,
                 'error' => $e->getMessage(),
             ]);
             throw $e;
@@ -65,57 +49,43 @@ class ContentGenerationService
     }
 
     /**
-     * Generate an image URL for the given content type and prompt.
+     * Generate an image for a spa content type using DALL-E 3.
      *
-     * @param  string $type   e.g. 'treatment', 'room'
-     * @param  string $prompt Descriptive context for the image.
-     * @return string The URL of the generated image.
+     * The image is stored on the default filesystem disk and the public URL
+     * is returned. The caller is responsible for making the disk publicly
+     * accessible (e.g. running `php artisan storage:link`).
      *
-     * @throws \Exception When Ollama is selected (unsupported) or generation fails.
+     * @param  string $type   e.g. "treatment", "room"
+     * @param  string $prompt Descriptive context for the image
+     * @return string The stored image path (relative to the disk root)
+     *
+     * @throws \Throwable on generation failure
      */
     public function generateImage(string $type, string $prompt): string
     {
-        if ($this->imageDriver === 'ollama') {
-            throw new \Exception('Image generation is not supported by Ollama. Use OpenAI.');
-        }
-
         $fullPrompt = "A high-quality, professional photograph for a premium spa website. "
             . "Subject: {$type}. Context: {$prompt}. Elegant, serene, high-end aesthetics.";
 
         try {
             $image = Image::of($fullPrompt)
-                ->square()
-                ->generate();
+                ->landscape()
+                ->quality('high')
+                ->generate(provider: Lab::OpenAI, model: 'dall-e-3');
 
-            // store() returns the path; for an API we need the raw content as base64
-            // or the URL. The SDK returns the raw binary — store it and return the URL,
-            // or return the base64-encoded content for the client to handle.
-            $path = $image->storePubliclyAs("generated/{$type}-" . uniqid() . '.png');
+            // Store the image on the default disk and return the path
+            $path = $image->storePublicly('ai-images');
 
-            return asset("storage/{$path}");
+            if (empty($path)) {
+                throw new \RuntimeException('AI image generation returned an empty path after storage.');
+            }
+
+            return $path;
         } catch (\Throwable $e) {
-            Log::error("ContentGenerationService ({$this->imageDriver}): Image generation failed", [
+            Log::error('ContentGenerationService: Image generation failed', [
+                'type'  => $type,
                 'error' => $e->getMessage(),
             ]);
             throw $e;
         }
-    }
-
-    // -------------------------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------------------------
-
-    /**
-     * Resolve the Laravel AI SDK provider identifier for text generation.
-     *
-     * Returns a Lab enum for known providers, or the raw string for custom ones.
-     */
-    private function resolveTextProvider(): Lab|string
-    {
-        return match ($this->textDriver) {
-            'openai' => Lab::OpenAI,
-            'ollama' => 'ollama',
-            default  => Lab::OpenAI,
-        };
     }
 }

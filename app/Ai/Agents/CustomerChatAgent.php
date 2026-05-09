@@ -54,13 +54,23 @@ class CustomerChatAgent implements Agent, Conversational, HasStructuredOutput
         return <<<PROMPT
 You are a spa booking assistant. Extract booking intent from the customer's message.
 
-If all four parameters are present (date, time, treatment, branch), set type to
-"booking_intent" and populate the params object.
+Always return ALL fields. Use an empty string "" for fields that do not apply.
 
-If any parameter is missing, set type to "clarification", specify the missingField
-(one of: date, time, treatment, branch), and provide a friendly question as message.
+If all four parameters are present (date, time, treatment, branch):
+- Set type to "booking_intent"
+- Populate params with date (YYYY-MM-DD), time (HH:MM), treatmentId, branchId
+- Set missingField and message to ""
 
-If the message is unrelated to booking, set type to "error" with an appropriate message.
+If any parameter is missing:
+- Set type to "clarification"
+- Set missingField to the missing field name (date | time | treatment | branch)
+- Set message to a friendly question asking for the missing information
+- Set params fields to ""
+
+If the message is unrelated to booking:
+- Set type to "error"
+- Set message to a brief explanation
+- Set missingField to "" and params fields to ""
 PROMPT;
     }
 
@@ -76,25 +86,31 @@ PROMPT;
 
     /**
      * Structured output schema for booking intent or clarification.
+     *
+     * OpenAI structured output requires ALL properties to be listed in
+     * "required". Use empty string "" as the sentinel for "not applicable".
      */
     public function schema(JsonSchema $schema): array
     {
         return [
+            // Always present: "booking_intent" | "clarification" | "error"
             'type' => $schema->string()
                 ->enum(['booking_intent', 'clarification', 'error'])
                 ->required(),
 
+            // Populated when type = "booking_intent"; empty strings otherwise
             'params' => $schema->object(fn (JsonSchema $s) => [
-                'date'        => $s->string(),
-                'time'        => $s->string(),
-                'treatmentId' => $s->string(),
-                'branchId'    => $s->string(),
-            ]),
+                'date'        => $s->string()->required(),
+                'time'        => $s->string()->required(),
+                'treatmentId' => $s->string()->required(),
+                'branchId'    => $s->string()->required(),
+            ])->required(),
 
-            'missingField' => $schema->string()
-                ->enum(['date', 'time', 'treatment', 'branch']),
+            // Populated when type = "clarification"; empty string otherwise
+            'missingField' => $schema->string()->required(),
 
-            'message' => $schema->string(),
+            // Populated when type = "clarification" or "error"; empty string otherwise
+            'message' => $schema->string()->required(),
         ];
     }
 }

@@ -18,6 +18,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -172,9 +173,8 @@ class SentimentAnalysisJobPropertyTest extends TestCase
      * For any non-empty feedback comment processed by the Sentiment_Analyzer,
      * the resulting sentiment_score is in [-1.0, 1.0] and sentiment_label is
      * one of {positive, neutral, negative}.
-     *
-     * @dataProvider sentimentOutputProvider
      */
+    #[DataProvider('sentimentOutputProvider')]
     public function test_property24_sentiment_output_validity(
         float  $rawScore,
         string $rawLabel,
@@ -274,9 +274,8 @@ class SentimentAnalysisJobPropertyTest extends TestCase
      *
      * Tests the failed() method directly — it is called by Laravel's queue
      * worker after all $tries are exhausted.
-     *
-     * @dataProvider retryExhaustionProvider
      */
+    #[DataProvider('retryExhaustionProvider')]
     public function test_property25_sentiment_retry_exhaustion(
         string $comment,
         string $errorMessage

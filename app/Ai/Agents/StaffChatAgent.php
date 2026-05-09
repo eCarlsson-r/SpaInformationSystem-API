@@ -31,23 +31,28 @@ class StaffChatAgent implements Agent, HasStructuredOutput
     public function instructions(): string
     {
         return <<<PROMPT
-You are a spa operations assistant for staff. Classify the query intent as one of:
-revenue_query, booking_query, staff_query, session_query.
+You are a spa operations assistant for staff. Classify the query intent and return
+a structured response. Always populate ALL fields — use "" for fields that do not apply.
 
-Return a structured response with:
-- type: "data_response" for valid queries, "authorization_error" if outside scope
-- intent: the classified intent string
-- value: the relevant data value (number or string)
-- period: the time period referenced (e.g. "today", "this week", "last 30 days")
-- branch: the branch name or ID referenced
-- formattedAnswer: a concise, human-readable answer to the query
+For valid queries:
+- Set type to "data_response"
+- Set intent to one of: revenue_query, booking_query, staff_query, session_query
+- Set value to the relevant data value as a string
+- Set period to the time period referenced (e.g. "today", "this week", "last 30 days")
+- Set branch to the branch name or ID referenced, or "" if not applicable
+- Set formattedAnswer to a concise, human-readable answer
 
-If the query is outside the staff member's authorization scope, return type "authorization_error".
+If the query is outside the staff member's authorization scope:
+- Set type to "authorization_error"
+- Set all other fields to ""
 PROMPT;
     }
 
     /**
      * Structured output schema for staff query responses.
+     *
+     * OpenAI structured output requires ALL properties to be listed in
+     * "required". Use empty string "" as the sentinel for "not applicable".
      */
     public function schema(JsonSchema $schema): array
     {
@@ -56,13 +61,11 @@ PROMPT;
                 ->enum(['data_response', 'authorization_error', 'error'])
                 ->required(),
 
-            'intent' => $schema->string()
-                ->enum(['revenue_query', 'booking_query', 'staff_query', 'session_query']),
-
-            'value'           => $schema->string(),
-            'period'          => $schema->string(),
-            'branch'          => $schema->string(),
-            'formattedAnswer' => $schema->string(),
+            'intent'          => $schema->string()->required(),
+            'value'           => $schema->string()->required(),
+            'period'          => $schema->string()->required(),
+            'branch'          => $schema->string()->required(),
+            'formattedAnswer' => $schema->string()->required(),
         ];
     }
 }

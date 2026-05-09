@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -108,9 +109,8 @@ class FeedbackControllerPropertyTest extends TestCase
     /**
      * For any feedback form submission, the persisted record contains non-null
      * values for rating, comment, session_id, and customer_id.
-     *
-     * @dataProvider feedbackPayloadProvider
      */
+    #[DataProvider('feedbackPayloadProvider')]
     public function test_property21_feedback_payload_completeness(int $rating, string $comment): void
     {
         // Feature: spa-ai-features, Property 21: Feedback submission payload completeness
@@ -183,9 +183,8 @@ class FeedbackControllerPropertyTest extends TestCase
     /**
      * For any feedback submission at time T for a session completed at time S,
      * the submission is accepted iff T − S ≤ 48 hours.
-     *
-     * @dataProvider timeWindowProvider
      */
+    #[DataProvider('timeWindowProvider')]
     public function test_property22_feedback_time_window_enforcement(float $hoursAfterCompletion, bool $shouldBeAccepted): void
     {
         // Feature: spa-ai-features, Property 22: Feedback time window enforcement
@@ -259,9 +258,8 @@ class FeedbackControllerPropertyTest extends TestCase
      * For any customer-session pair, submitting a second feedback record results
      * in the Backend_API rejecting the duplicate, leaving exactly one feedback
      * record for that pair.
-     *
-     * @dataProvider duplicateSubmissionProvider
      */
+    #[DataProvider('duplicateSubmissionProvider')]
     public function test_property23_one_feedback_per_customer_per_session(
         int    $firstRating,
         string $firstComment,

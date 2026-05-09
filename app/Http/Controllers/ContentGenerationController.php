@@ -36,17 +36,17 @@ class ContentGenerationController extends Controller
     public function generateImage(Request $request)
     {
         $request->validate([
-            'type' => 'required|string',
+            'type'   => 'required|string',
             'prompt' => 'required|string',
         ]);
 
         try {
-            $imageUrl = $this->service->generateImage(
+            $path = $this->service->generateImage(
                 $request->type,
                 $request->prompt
             );
 
-            return response()->json(['image_url' => $imageUrl]);
+            return response()->json(['image_path' => $path]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

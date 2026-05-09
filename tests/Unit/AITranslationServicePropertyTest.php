@@ -9,6 +9,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -101,9 +102,8 @@ class AITranslationServicePropertyTest extends TestCase
      * For any content and locale, when locale is 'en', return content unchanged.
      * When locale is not 'en' and not 'id', return content unchanged.
      * Only invoke AI translation for 'id' locale.
-     *
-     * @dataProvider translationContentProvider
      */
+    #[DataProvider('translationContentProvider')]
     public function test_property11_translation_only_for_indonesian(string $content, string $locale): void
     {
         // Feature: pwa-i18n, Property 11: AI translation is invoked only for non-English locales
@@ -161,9 +161,8 @@ class AITranslationServicePropertyTest extends TestCase
      *
      * When translating to Indonesian, treatment names, proper nouns,
      * and numeric values should be preserved in their original form.
-     *
-     * @dataProvider preservationContentProvider
      */
+    #[DataProvider('preservationContentProvider')]
     public function test_property13_preserves_treatment_names_and_numbers(string $content): void
     {
         // Feature: pwa-i18n, Property 13: AI translation preserves treatment names and numeric values

@@ -47,6 +47,8 @@ PROMPT;
 
     /**
      * Structured output schema: array of recommendation objects.
+     *
+     * OpenAI structured output requires ALL properties to be listed in "required".
      */
     public function schema(JsonSchema $schema): array
     {
