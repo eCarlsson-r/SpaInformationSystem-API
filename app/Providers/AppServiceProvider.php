@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Models\Session;
 use App\Observers\BookingObserver;
+use App\Services\AITranslationService;
+use App\Services\AITranslationServiceInterface;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -13,8 +15,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Register AI Translation Service
-        $this->app->bind(\App\Services\AITranslationServiceInterface::class, \App\Services\AITranslationService::class);
+        // Bind the translation service interface to the Laravel AI SDK-backed implementation
+        $this->app->bind(AITranslationServiceInterface::class, AITranslationService::class);
     }
 
     /**

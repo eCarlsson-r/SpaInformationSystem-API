@@ -2,135 +2,120 @@
 
 namespace App\Services;
 
-use GuzzleHttp\Client;
+use App\Ai\Agents\ContentDescriptionAgent;
 use Illuminate\Support\Facades\Log;
+use Laravel\Ai\Enums\Lab;
+use Laravel\Ai\Image;
 
+/**
+ * ContentGenerationService
+ *
+ * Generates descriptions and images for spa content using the Laravel AI SDK.
+ *
+ * Text generation supports OpenAI and Ollama (configured via config/ai.php).
+ * Image generation supports OpenAI (DALL-E 3) only — Ollama does not support images.
+ */
 class ContentGenerationService
 {
-    private const DEFAULT_TIMEOUT = 60.0; // Increased for local image generation
-
     private string $textDriver;
     private string $imageDriver;
 
     public function __construct()
     {
-        $this->textDriver = config('services.ai_text_driver', 'openai');
+        $this->textDriver  = config('services.ai_text_driver', 'openai');
         $this->imageDriver = config('services.ai_image_driver', 'openai');
     }
 
     /**
-     * Get a configured HTTP client for the specific driver.
-     */
-    private function getClient(string $driver): Client
-    {
-        $baseUri = 'https://api.openai.com';
-        
-        if ($driver === 'ollama') {
-            $baseUri = config('services.ollama.url');
-        } elseif ($driver === 'localai') {
-            $baseUri = config('services.localai.url');
-        }
-
-        return new Client([
-            'base_uri' => $baseUri,
-            'timeout'  => self::DEFAULT_TIMEOUT,
-        ]);
-    }
-
-    /**
-     * Generate description based on fields.
+     * Generate a description for the given content type and fields.
+     *
+     * @param  string $type   e.g. 'treatment', 'room', 'branch'
+     * @param  array  $fields Key-value pairs describing the content.
+     * @return string The generated description.
+     *
+     * @throws \Exception When the configured driver is unavailable.
      */
     public function generateDescription(string $type, array $fields): string
     {
-        $client = $this->getClient($this->textDriver);
-        $model = 'gpt-4o-mini';
-        $apiKey = config('services.openai.api_key');
+        $fieldsJson = json_encode($fields, JSON_UNESCAPED_UNICODE);
+        $prompt     = "Generate a description for this {$type} with the following details: {$fieldsJson}";
 
-        if ($this->textDriver === 'ollama') {
-            $model = config('services.ollama.model', 'gemma2');
-            $apiKey = null;
-        } elseif ($this->textDriver === 'localai') {
-            $model = config('services.localai.text_model', 'gemma-2-9b');
-            $apiKey = null;
-        }
-
-        if ($this->textDriver === 'openai' && empty($apiKey)) {
-            throw new \Exception('OpenAI API Key is not configured.');
-        }
-
-        $fieldsJson = json_encode($fields);
-        $systemPrompt = "You are a professional copywriter for a premium spa. Write a compelling, elegant description for a {$type} based on the following details: {$fieldsJson}. Keep it under 100 words. Return only the description text.";
+        // Resolve the provider for the Laravel AI SDK
+        $provider = $this->resolveTextProvider();
 
         try {
-            $headers = ['Content-Type' => 'application/json'];
-            if ($apiKey) $headers['Authorization'] = "Bearer {$apiKey}";
+            $response = (new ContentDescriptionAgent)->prompt(
+                $prompt,
+                provider: $provider,
+            );
 
-            $response = $client->post('/v1/chat/completions', [
-                'headers' => $headers,
-                'json' => [
-                    'model'       => $model,
-                    'messages'    => [
-                        ['role' => 'system', 'content' => $systemPrompt],
-                        ['role' => 'user',   'content' => "Generate description for this {$type}."],
-                    ],
-                    'temperature' => 0.7,
-                    'max_tokens'  => 200,
-                ],
-            ]);
+            $text = trim((string) $response);
 
-            $body = json_decode($response->getBody()->getContents(), true);
-            return trim($body['choices'][0]['message']['content'] ?? '');
+            if (empty($text)) {
+                throw new \RuntimeException('AI agent returned an empty description.');
+            }
+
+            return $text;
         } catch (\Throwable $e) {
-            Log::error("ContentGenerationService ({$this->textDriver}): Description generation failed", ['error' => $e->getMessage()]);
+            Log::error("ContentGenerationService ({$this->textDriver}): Description generation failed", [
+                'error' => $e->getMessage(),
+            ]);
             throw $e;
         }
     }
 
     /**
-     * Generate image based on description or name.
+     * Generate an image URL for the given content type and prompt.
+     *
+     * @param  string $type   e.g. 'treatment', 'room'
+     * @param  string $prompt Descriptive context for the image.
+     * @return string The URL of the generated image.
+     *
+     * @throws \Exception When Ollama is selected (unsupported) or generation fails.
      */
     public function generateImage(string $type, string $prompt): string
     {
         if ($this->imageDriver === 'ollama') {
-            throw new \Exception('Image generation is not supported by Ollama. Use LocalAI or OpenAI.');
+            throw new \Exception('Image generation is not supported by Ollama. Use OpenAI.');
         }
 
-        $client = $this->getClient($this->imageDriver);
-        $model = 'dall-e-3';
-        $apiKey = config('services.openai.api_key');
-
-        if ($this->imageDriver === 'localai') {
-            $model = config('services.localai.image_model', 'stablediffusion');
-            $apiKey = null;
-        }
-
-        if ($this->imageDriver === 'openai' && empty($apiKey)) {
-            throw new \Exception('OpenAI API Key is not configured.');
-        }
-
-        $fullPrompt = "A high-quality, professional photograph for a premium spa website. Subject: {$type}. Context: {$prompt}. Elegant, serene, high-end aesthetics.";
+        $fullPrompt = "A high-quality, professional photograph for a premium spa website. "
+            . "Subject: {$type}. Context: {$prompt}. Elegant, serene, high-end aesthetics.";
 
         try {
-            $headers = ['Content-Type' => 'application/json'];
-            if ($apiKey) $headers['Authorization'] = "Bearer {$apiKey}";
+            $image = Image::of($fullPrompt)
+                ->square()
+                ->generate();
 
-            $response = $client->post('/v1/images/generations', [
-                'headers' => $headers,
-                'json' => [
-                    'model'  => $model,
-                    'prompt' => $fullPrompt,
-                    'n'      => 1,
-                    'size'   => '1024x1024',
-                ],
-            ]);
+            // store() returns the path; for an API we need the raw content as base64
+            // or the URL. The SDK returns the raw binary — store it and return the URL,
+            // or return the base64-encoded content for the client to handle.
+            $path = $image->storePubliclyAs("generated/{$type}-" . uniqid() . '.png');
 
-            $body = json_decode($response->getBody()->getContents(), true);
-            
-            // LocalAI often returns the URL directly in the same format as OpenAI
-            return $body['data'][0]['url'] ?? '';
+            return asset("storage/{$path}");
         } catch (\Throwable $e) {
-            Log::error("ContentGenerationService ({$this->imageDriver}): Image generation failed", ['error' => $e->getMessage()]);
+            Log::error("ContentGenerationService ({$this->imageDriver}): Image generation failed", [
+                'error' => $e->getMessage(),
+            ]);
             throw $e;
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Resolve the Laravel AI SDK provider identifier for text generation.
+     *
+     * Returns a Lab enum for known providers, or the raw string for custom ones.
+     */
+    private function resolveTextProvider(): Lab|string
+    {
+        return match ($this->textDriver) {
+            'openai' => Lab::OpenAI,
+            'ollama' => 'ollama',
+            default  => Lab::OpenAI,
+        };
     }
 }
