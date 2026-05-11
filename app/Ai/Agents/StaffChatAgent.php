@@ -18,9 +18,8 @@ use Laravel\Ai\Promptable;
  *
  * Requirements: 5.2, 5.3, 5.4, 5.5, 5.6
  */
-#[Model('gpt-4o-mini')]
 #[Temperature(0.1)]
-#[Timeout(10)]
+#[Timeout(60)]
 class StaffChatAgent implements Agent, HasStructuredOutput
 {
     use Promptable;

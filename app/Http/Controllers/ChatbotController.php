@@ -72,6 +72,7 @@ class ChatbotController extends Controller
      */
     public function staff(Request $request): JsonResponse
     {
+
         $validated = $request->validate([
             'query' => 'required|string|max:2000',
         ]);

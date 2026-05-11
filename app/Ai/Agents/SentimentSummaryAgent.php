@@ -16,9 +16,8 @@ use Laravel\Ai\Promptable;
  *
  * Requirements: 11.5
  */
-#[Model('gpt-4o-mini')]
 #[Temperature(0.3)]
-#[Timeout(12)]
+#[Timeout(60)]
 class SentimentSummaryAgent implements Agent
 {
     use Promptable;

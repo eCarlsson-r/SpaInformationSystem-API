@@ -4,7 +4,11 @@ namespace App\Services;
 
 use App\Ai\Agents\CustomerChatAgent;
 use App\Ai\Agents\StaffChatAgent;
+use App\Models\Sales;
+use App\Models\SalesRecord;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 use Laravel\Ai\Messages\Message;
 
 /**
@@ -50,14 +54,18 @@ class ChatbotService
                     'missingField' => $response['missingField'] ?: null,
                     'message'      => $response['message']      ?: null,
                 ],
+                'recommendation' => [
+                    'type'    => 'recommendation',
+                    'message' => $response['message'] ?: null,
+                ],
                 default => [
                     'type'    => 'error',
                     'message' => $response['message'] ?: 'Unexpected response from assistant.',
                 ],
             };
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Log::warning('ChatbotService: Customer message processing failed', ['error' => $e->getMessage()]);
-            return ['type' => 'error', 'message' => 'Assistant is temporarily unavailable.'];
+            return ['type' => 'error', 'message' => $e->getMessage()];
         }
     }
 
@@ -74,8 +82,11 @@ class ChatbotService
     {
         $role     = $staffContext['role']      ?? 'staff';
         $branchId = $staffContext['branch_id'] ?? null;
-
-        $prompt = "Staff role: {$role}, Branch ID: {$branchId}\nQuery: {$query}";
+        $stats    = $this->fetchStaffStats($branchId);
+        
+        $prompt = "Staff role: {$role}, Branch ID: {$branchId}\n";
+        $prompt .= "Current Statistics:\n{$stats}\n";
+        $prompt .= "Query: {$query}";
 
         try {
             $response = (new StaffChatAgent)->prompt($prompt);
@@ -94,9 +105,63 @@ class ChatbotService
             }
 
             return ['type' => $type];
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Log::warning('ChatbotService: Staff query processing failed', ['error' => $e->getMessage()]);
-            return ['type' => 'error', 'message' => 'Assistant is temporarily unavailable.'];
+            return ['type' => 'error', 'message' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Fetch a summary of operational stats to provide as context to the staff agent.
+     */
+    private function fetchStaffStats(?int $branchId): string
+    {
+        $startOfMonth = now()->startOfMonth();
+        
+        $topTreatments = SalesRecord::whereHas('sales', function ($q) use ($branchId, $startOfMonth) {
+                $q->where('date', '>=', $startOfMonth);
+                if ($branchId) $q->where('branch_id', $branchId);
+            })
+            ->select('treatment_id', DB::raw('count(*) as count'))
+            ->groupBy('treatment_id')
+            ->orderByDesc('count')
+            ->limit(3)
+            ->with('treatment:id,name')
+            ->get()
+            ->map(fn($r) => "{$r->treatment->name} ({$r->count} sold)")
+            ->implode(', ');
+
+        $revenue = Sales::where('date', '>=', $startOfMonth);
+        if ($branchId) $revenue->where('branch_id', $branchId);
+        $revenue = $revenue->sum('total');
+
+        $topCustomer = Sales::where('date', '>=', $startOfMonth)
+            ->whereNotNull('customer_id');
+        if ($branchId) $topCustomer->where('branch_id', $branchId);
+        $topCustomer = $topCustomer->select('customer_id', DB::raw('count(*) as count'))
+            ->groupBy('customer_id')
+            ->orderByDesc('count')
+            ->limit(1)
+            ->with('customer:id,name')
+            ->first();
+
+        $customerStr = $topCustomer ? "{$topCustomer->customer->name} ({$topCustomer->count} visits)" : 'None yet';
+
+        $topEmployee = Sales::where('date', '>=', $startOfMonth)
+            ->whereNotNull('employee_id');
+        if ($branchId) $topEmployee->where('branch_id', $branchId);
+        $topEmployee = $topEmployee->select('employee_id', DB::raw('count(*) as count'))
+            ->groupBy('employee_id')
+            ->orderByDesc('count')
+            ->limit(1)
+            ->with('employee:id,name')
+            ->first();
+
+        $employeeStr = $topEmployee ? "{$topEmployee->employee->name} ({$topEmployee->count} sessions)" : 'None yet';
+
+        return "Top treatments this month: " . ($topTreatments ?: 'None yet') . 
+               "\nTotal revenue this month: " . number_format($revenue, 0) . " IDR" .
+               "\nMost frequent customer this month: " . $customerStr .
+               "\nTop employee this month: " . $employeeStr;
     }
 }

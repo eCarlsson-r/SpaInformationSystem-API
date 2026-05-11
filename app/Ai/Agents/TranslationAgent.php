@@ -17,9 +17,8 @@ use Laravel\Ai\Promptable;
  *
  * Requirements: 8.1, 8.2, 8.3, 8.4, 8.6
  */
-#[Model('gpt-4o-mini')]
 #[Temperature(0.1)]
-#[Timeout(10)]
+#[Timeout(60)]
 class TranslationAgent implements Agent
 {
     use Promptable;

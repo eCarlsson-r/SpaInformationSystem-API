@@ -20,9 +20,8 @@ use Laravel\Ai\Promptable;
  *
  * Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 2.1, 2.2, 2.3
  */
-#[Model('gpt-4o-mini')]
 #[Temperature(0.3)]
-#[Timeout(10)]
+#[Timeout(60)]
 class RecommendationAgent implements Agent, HasStructuredOutput
 {
     use Promptable;

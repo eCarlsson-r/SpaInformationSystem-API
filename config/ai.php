@@ -29,11 +29,31 @@ return [
         'openai' => [
             'driver' => 'openai',
             'key'    => env('OPENAI_API_KEY'),
+            'models' => [
+                'text' => [
+                    'default' => env('AI_TEXT_MODEL', 'gpt-4o-mini'),
+                ],
+            ],
         ],
 
         'ollama' => [
             'driver' => 'ollama',
             'url'    => env('OLLAMA_URL', 'http://localhost:11434'),
+            'models' => [
+                'text' => [
+                    'default' => env('AI_TEXT_MODEL', 'gemma4:e2b'),
+                ],
+            ],
+        ],
+
+        'gemini' => [
+            'driver' => 'gemini',
+            'key'    => env('GEMINI_API_KEY'),
+            'models' => [
+                'text' => [
+                    'default' => env('AI_TEXT_MODEL', 'gemini-1.5-flash'),
+                ],
+            ],
         ],
 
     ],

@@ -20,9 +20,8 @@ use Laravel\Ai\Promptable;
  *
  * Requirements: 4.2, 4.3, 4.4, 4.5, 4.6, 4.7
  */
-#[Model('gpt-4o-mini')]
 #[Temperature(0.2)]
-#[Timeout(10)]
+#[Timeout(60)]
 class CustomerChatAgent implements Agent, Conversational, HasStructuredOutput
 {
     use Promptable;
@@ -52,7 +51,7 @@ class CustomerChatAgent implements Agent, Conversational, HasStructuredOutput
     public function instructions(): string
     {
         return <<<PROMPT
-You are a spa booking assistant. Extract booking intent from the customer's message.
+You are a spa booking assistant. Extract booking intent from the customer's message. Return ONLY a valid JSON object.
 
 Always return ALL fields. Use an empty string "" for fields that do not apply.
 
@@ -67,7 +66,12 @@ If any parameter is missing:
 - Set message to a friendly question asking for the missing information
 - Set params fields to ""
 
-If the message is unrelated to booking:
+If the customer asks for a recommendation or treatment advice:
+- Set type to "recommendation"
+- Set message to a friendly response asking for their preferences (e.g. relaxation, deep tissue, etc.) if they haven't specified any
+- Set missingField and params fields to ""
+
+If the message is unrelated to booking or recommendations:
 - Set type to "error"
 - Set message to a brief explanation
 - Set missingField to "" and params fields to ""
@@ -95,7 +99,7 @@ PROMPT;
         return [
             // Always present: "booking_intent" | "clarification" | "error"
             'type' => $schema->string()
-                ->enum(['booking_intent', 'clarification', 'error'])
+                ->enum(['booking_intent', 'clarification', 'recommendation', 'error'])
                 ->required(),
 
             // Populated when type = "booking_intent"; empty strings otherwise

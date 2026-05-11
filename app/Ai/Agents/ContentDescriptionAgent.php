@@ -14,7 +14,6 @@ use Laravel\Ai\Promptable;
  * Generates compelling, elegant descriptions for spa treatments, rooms,
  * and other content types based on provided field data.
  */
-#[Model('gpt-4o-mini')]
 #[Temperature(0.7)]
 #[Timeout(60)]
 class ContentDescriptionAgent implements Agent

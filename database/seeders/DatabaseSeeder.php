@@ -216,7 +216,6 @@ class DatabaseSeeder extends Seeder
     private function seedBanners()
     {
         Banner::factory()->create([
-            'image' => '/storage/images/slider1.webp',
             'introduction' => 'Welcome',
             'title' => 'CARLSSON Spa & Salon',
             'subtitle' => 'Refresh your body and soul here',
@@ -226,7 +225,6 @@ class DatabaseSeeder extends Seeder
         ]);
 
         Banner::factory()->create([
-            'image' => '/storage/images/slider4.webp',
             'introduction' => "Let's invest with",
             'title' => 'Voucher Set',
             'subtitle' => 'To enjoy our treatment later without having to think about cost',
