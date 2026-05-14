@@ -69,7 +69,7 @@ class ContentGenerationService
         try {
             $image = Image::of($fullPrompt)
                 ->landscape()
-                ->quality('high')
+                ->quality('hd')
                 ->generate(provider: Lab::OpenAI, model: 'dall-e-3');
 
             // Store the image on the default disk and return the path
