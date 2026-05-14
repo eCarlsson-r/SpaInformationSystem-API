@@ -33,6 +33,9 @@ return [
                 'text' => [
                     'default' => env('AI_TEXT_MODEL', 'gpt-4o-mini'),
                 ],
+                'image' => [
+                    'default' => env('AI_IMAGE_MODEL', 'gpt-image-1-mini')
+                ]
             ],
         ],
 
@@ -51,8 +54,11 @@ return [
             'key'    => env('GEMINI_API_KEY'),
             'models' => [
                 'text' => [
-                    'default' => env('AI_TEXT_MODEL', 'gemini-1.5-flash'),
+                    'default' => env('AI_TEXT_MODEL', 'gemini-2.5-flash')
                 ],
+                'image' => [
+                    'default' => env('AI_IMAGE_MODEL', 'gemini-2.5-flash-image')
+                ]
             ],
         ],
 
