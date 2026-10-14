@@ -1,0 +1,148 @@
+[
+  {
+    "module_slug": "tier-grade-employee-compensation-engine",
+    "module_name": "Tier & Grade Employee Compensation Engine",
+    "category": "hr",
+    "description": "Calculates multi-tier employee compensation, grade-based treatment bonuses, diligence rewards, attendance deductions, and recruiter/trainer commission splits across arbitrary date ranges.",
+    "implementation_notes": "Implemented in app/Services/CompensationService.php and app/Http/Controllers/CompensationController.php. Interacts with employees, grades, bonus, attendance, shifts, sessions, and sales_records tables.",
+    "portability": "medium",
+    "reusable_for_industries": [
+      "salon_and_beauty",
+      "wellness_and_fitness",
+      "automotive_services",
+      "cleaning_services",
+      "healthcare_clinics"
+    ]
+  },
+  {
+    "module_slug": "treatment-voucher-lifecycle-manager",
+    "module_name": "Treatment Voucher Lifecycle Manager",
+    "category": "inventory",
+    "description": "Handles serialized voucher generation, batch inventory range tracking, customer purchase association, and cross-session redemption validation.",
+    "implementation_notes": "Implemented in app/Http/Controllers/VoucherController.php and app/Http/Controllers/CartController.php. Interacts with voucher, treatments, sales, sessions, and sales_records tables.",
+    "portability": "high",
+    "reusable_for_industries": [
+      "salon_and_beauty",
+      "fitness_gyms",
+      "hospitality_resorts",
+      "amusement_parks",
+      "healthcare_wellness"
+    ]
+  },
+  {
+    "module_slug": "multi-resource-session-scheduling",
+    "module_name": "Multi-Resource Session Scheduling",
+    "category": "scheduling",
+    "description": "Manages appointment bookings with simultaneous resource constraints including bed/room availability, therapist assignments, and real-time session status transitions.",
+    "implementation_notes": "Implemented in app/Http/Controllers/SessionController.php. Interacts with sessions, beds, rooms, employees, customers, and treatments tables.",
+    "portability": "high",
+    "reusable_for_industries": [
+      "dental_clinics",
+      "pet_grooming",
+      "tattoo_studios",
+      "medical_spa",
+      "car_detailing"
+    ]
+  },
+  {
+    "module_slug": "ai-booking-conflict-resolution",
+    "module_name": "AI-Powered Booking Conflict Resolution",
+    "category": "ai",
+    "description": "Detects booking overlaps across staff and rooms, logs conflict audit trails, computes alternative candidate time slots, and supports one-click customer rescheduling.",
+    "implementation_notes": "Implemented in app/Http/Controllers/ConflictController.php. Interacts with conflicts, sessions, employees, and branches tables.",
+    "portability": "high",
+    "reusable_for_industries": [
+      "healthcare_clinics",
+      "salon_and_beauty",
+      "co-working_spaces",
+      "consulting_services"
+    ]
+  },
+  {
+    "module_slug": "ai-feedback-sentiment-analytics",
+    "module_name": "AI Feedback Sentiment & NLP Analytics",
+    "category": "analytics",
+    "description": "Enforces post-session customer feedback windows, dispatches async background NLP sentiment scoring, surfaces negative feedback alerts, and generates executive AI summaries.",
+    "implementation_notes": "Implemented in app/Http/Controllers/FeedbackController.php, app/Http/Controllers/SentimentController.php, app/Jobs/SentimentAnalysisJob.php, and app/Ai/Agents/SentimentSummaryAgent.php. Interacts with feedbacks and sessions tables.",
+    "portability": "high",
+    "reusable_for_industries": [
+      "hospitality",
+      "e_commerce",
+      "restaurants",
+      "healthcare",
+      "customer_support"
+    ]
+  },
+  {
+    "module_slug": "double-entry-journal-accounting",
+    "module_name": "Double-Entry Financial Journaling & Ledger",
+    "category": "payments",
+    "description": "Provides automated double-entry financial journaling, linking income/expense line items directly to ledger debit/credit accounts and branch balance sheets.",
+    "implementation_notes": "Implemented in app/Http/Controllers/AccountController.php, app/Http/Controllers/JournalController.php, app/Http/Controllers/IncomeController.php, and app/Http/Controllers/ExpenseController.php. Interacts with accounts, journals, journal_records, incomes, and expenses tables.",
+    "portability": "high",
+    "reusable_for_industries": [
+      "retail",
+      "field_services",
+      "property_management",
+      "e_commerce",
+      "logistics"
+    ]
+  },
+  {
+    "module_slug": "biometric-attendance-synchronization",
+    "module_name": "Biometric Hardware Attendance Synchronizer",
+    "category": "hr",
+    "description": "Synchronizes attendance logs directly from ZKTeco biometric IP hardware devices, matches check-ins against scheduled shifts, and calculates late/early leave penalties.",
+    "implementation_notes": "Implemented in app/Services/AttendanceSyncService.php and app/Http/Controllers/AttendanceController.php. Interacts with attendance, shifts, and employees tables.",
+    "portability": "high",
+    "reusable_for_industries": [
+      "manufacturing",
+      "construction",
+      "retail_stores",
+      "warehousing",
+      "hospitality"
+    ]
+  },
+  {
+    "module_slug": "ai-personalized-recommendation-engine",
+    "module_name": "AI Personalized Service Recommendation Engine",
+    "category": "ai",
+    "description": "Generates personalized service recommendations based on rolling customer history and branch contextual availability, with automatic fallback to popular items.",
+    "implementation_notes": "Implemented in app/Services/RecommendationService.php, app/Http/Controllers/RecommendationController.php, and app/Ai/Agents/RecommendationAgent.php. Interacts with sessions and treatments tables.",
+    "portability": "high",
+    "reusable_for_industries": [
+      "e_commerce",
+      "content_streaming",
+      "fitness_coaching",
+      "restaurant_dining"
+    ]
+  },
+  {
+    "module_slug": "context-aware-operational-chatbot",
+    "module_name": "Context-Aware Dual-Agent Chatbot",
+    "category": "ai",
+    "description": "Conversational AI assistant powered by LLM agents for customer booking guidance and staff operational metric querying with dynamic database context.",
+    "implementation_notes": "Implemented in app/Services/ChatbotService.php, app/Http/Controllers/ChatbotController.php, app/Ai/Agents/CustomerChatAgent.php, and app/Ai/Agents/StaffChatAgent.php. Interacts with agent_conversations and agent_conversation_messages tables.",
+    "portability": "high",
+    "reusable_for_industries": [
+      "customer_service",
+      "real_estate",
+      "banking",
+      "healthcare_helpdesk"
+    ]
+  },
+  {
+    "module_slug": "multi-method-pos-checkout",
+    "module_name": "Multi-Method POS Sales Checkout",
+    "category": "payments",
+    "description": "Processes point-of-sale checkout transactions with split-payment capabilities across cash, EDC card terminals, e-wallets, QR codes, and pre-purchased vouchers.",
+    "implementation_notes": "Implemented in app/Http/Controllers/SalesController.php and app/Http/Controllers/CartController.php. Interacts with sales, sales_records, income_payments, and wallets tables.",
+    "portability": "medium",
+    "reusable_for_industries": [
+      "retail_pos",
+      "restaurants",
+      "events_ticketing",
+      "service_centers"
+    ]
+  }
+]
