@@ -12,6 +12,7 @@ use App\Models\Voucher;
 use App\Models\Walkin;
 use App\Notifications\SalesMade;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class SalesController extends Controller
@@ -25,6 +26,7 @@ class SalesController extends Controller
             return Sales::with('records')
             ->where('customer_id', auth()->user()->customer->id)->get();
         } else {
+            $this->authorizeStaffBranch($request, (int) $request->input('branch'));
             return Sales::with('customer', 'records', 'income', 'income.payments')
                 ->whereBetween('date', [Carbon::parse($request->start), Carbon::parse($request->end)])
                 ->where('branch_id', $request->branch)
@@ -37,6 +39,25 @@ class SalesController extends Controller
      */
     public function store(Request $request)
     {
+        $request->validate([
+            'branch_id' => 'required|exists:branches,id',
+            'customer_id' => 'required|exists:customers,id',
+            'employee_id' => 'required|exists:employees,id',
+            'subtotal' => 'required|integer|min:0',
+            'discount' => 'required|integer|min:0',
+            'rounding' => 'required|integer|min:0',
+            'total' => 'required|integer|min:0',
+            'records' => 'required|array|min:1',
+            'records.*.treatment_id' => 'required|exists:treatments,id',
+            'records.*.quantity' => 'required|integer|min:1',
+            'records.*.price' => 'required|integer|min:0',
+            'records.*.discount' => 'required|integer|min:0',
+            'records.*.redeem_type' => 'required|in:walkin,voucher,walk-in',
+            'records.*.total_price' => 'required|integer|min:0',
+        ]);
+        $this->authorizeStaffBranch($request, (int) $request->input('branch_id'));
+
+        return DB::transaction(function () use ($request) {
         $incomeId = Income::whereYear('date', date("Y"))->orderBy("id", "desc")->first();
         if ($incomeId) $incomeId = $incomeId->id;
         $previousIncomeId = Income::whereYear('date', '<', date("Y"))->orderBy("id", "desc")->first();
@@ -71,6 +92,7 @@ class SalesController extends Controller
         } else {
             return response()->json(['message' => 'Failed to create sales'], 500);
         }
+        });
     }
 
     /**
@@ -78,7 +100,14 @@ class SalesController extends Controller
      */
     public function show(string $id)
     {
-        return Sales::findOrFail($id);
+        $sales = Sales::findOrFail($id);
+        $request = request();
+        if ($request->user()->customer) {
+            abort_unless((int) $sales->customer_id === (int) $request->user()->customer->id, 404);
+        } else {
+            $this->authorizeStaffBranch($request, (int) $sales->branch_id);
+        }
+        return $sales;
     }
 
     /**
@@ -86,7 +115,22 @@ class SalesController extends Controller
      */
     public function update(Request $request, Sales $sales)
     {
-        $sales = Sales::with('branch')->find($request->id);
+        $request->validate([
+            'id' => 'required|integer|exists:sales,id',
+            'payments' => 'required|array|min:1',
+            'payments.*.method' => 'required|in:cash,card,ewallet,voucher,qr',
+            'payments.*.amount' => 'required|integer|min:0',
+            'payments.*.details' => 'required|array',
+        ]);
+        $salesForAuthorization = Sales::findOrFail($request->input('id'));
+        $this->authorizeStaffBranch($request, (int) $salesForAuthorization->branch_id);
+        abort_unless((int) collect($request->input('payments'))->sum('amount') === (int) $salesForAuthorization->total, 422, 'Payment amounts must equal the sale total.');
+
+        abort_unless((int) $sales->id === (int) $request->input('id'), 404);
+
+        return DB::transaction(function () use ($request) {
+        $sales = Sales::with('branch')->lockForUpdate()->findOrFail($request->id);
+        abort_if($sales->income_id, 409, 'This sale has already been finalized.');
         $incomeId = Income::whereYear('date', date("Y"))->orderBy("id", "desc")->first();
         if ($incomeId) $incomeId = $incomeId->id;
         $previousIncomeId = Income::whereYear('date', '<', date("Y"))->orderBy("id", "desc")->first();
@@ -175,31 +219,31 @@ class SalesController extends Controller
             if ($payment["method"] == "cash") {
                 $income->payments()->create([
                     "wallet_id" => Branch::find($sales->branch_id)->cash_account,
-                    "amount" => $sales->total, "type" => "cash",
+                    "amount" => $payment['amount'], "type" => "cash",
                     "description" => "Uang Tunai"
                 ]);
             } else if ($payment["method"] == "card") {
                 $income->payments()->create([
                     "wallet_id" => Wallet::where("name", "EDC ".$paymentDetail["card_edc"])->first()->id,
-                    "amount" => $sales->total, "type" => "card",
+                    "amount" => $payment['amount'], "type" => "card",
                     "description" => "Kartu ".$paymentDetail["card_type"]." dengan nomor ".$paymentDetail["card_number"]
                 ]);
             } else if ($payment["method"] == "ewallet") {
                 $income->payments()->create([
                     "wallet_id" => Wallet::where("name", "EDC ".$paymentDetail["wallet_edc"])->first()->id,
-                    "amount" => $sales->total, "type" => "card",
+                    "amount" => $payment['amount'], "type" => "card",
                     "description" => "E-Wallet ".$paymentDetail["wallet_edc"]." dengan nomor ".$paymentDetail["mobile_number"]
                 ]);
             } else if ($payment["method"] == "voucher") {
                 $income->payments()->create([
                     "wallet_id" => Wallet::where("name", "Voucher ".$paymentDetail["voucher_provider"])->first()->id,
-                    "amount" => $sales->total, "type" => "card",
+                    "amount" => $payment['amount'], "type" => "card",
                     "description" => "Voucher ".$paymentDetail["voucher_provider"]." dengan nomor ".$paymentDetail["voucher_number"]
                 ]);
             } else if ($payment["method"] == "qr") {
                 $income->payments()->create([
                     "wallet_id" => Wallet::where("name", "AIO : Kode QR ".$paymentDetail["qr_edc"])->first()->id,
-                    "amount" => $sales->total, "type" => "card",
+                    "amount" => $payment['amount'], "type" => "card",
                     "description" => "Kode QR ".$paymentDetail["qr_edc"]
                 ]);
             }
@@ -210,6 +254,7 @@ class SalesController extends Controller
         } else {
             return response()->json(['message' => 'Failed to update sales'], 500);
         }
+        });
     }
 
     /**
@@ -218,5 +263,14 @@ class SalesController extends Controller
     public function destroy(Sales $sales)
     {
         //
+    }
+
+    private function authorizeStaffBranch(Request $request, int $branchId): void
+    {
+        $user = $request->user();
+        abort_unless(in_array(strtoupper((string) $user->type), ['ADMIN', 'MANAGER', 'STAFF', 'CASHIER', 'THERAPIST'], true), 403);
+        if (strtoupper((string) $user->type) !== 'ADMIN') {
+            abort_unless((int) $user->employee?->branch_id === $branchId, 403, 'Sales are limited to your assigned branch.');
+        }
     }
 }

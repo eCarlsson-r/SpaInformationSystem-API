@@ -24,7 +24,8 @@ class Session extends Model
         'bed_id',
         'customer_id',
         'voucher_id',
-        'walkin_id'
+        'walkin_id',
+        'sales_id',
     ];
 
     protected $guarded = [
@@ -64,5 +65,10 @@ class Session extends Model
     public function voucher()
     {
         return $this->hasOne(Voucher::class);
+    }
+
+    public function sales()
+    {
+        return $this->belongsTo(Sales::class, 'sales_id');
     }
 }

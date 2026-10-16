@@ -117,10 +117,17 @@ class SentimentAnalysisJob implements ShouldQueue
     {
         try {
             $response = (new \App\Ai\Agents\SentimentAgent())->prompt($comment);
+            $rawScore = filter_var($response['score'] ?? null, FILTER_VALIDATE_FLOAT);
+            if ($rawScore === false || !is_finite((float) $rawScore)) {
+                throw new \RuntimeException('AI returned an invalid sentiment score.');
+            }
+
+            $score = max(-1.0, min(1.0, (float) $rawScore));
+            $label = $score >= 0.2 ? 'positive' : ($score <= -0.2 ? 'negative' : 'neutral');
 
             return [
-                (float) ($response['score'] ?? 0.0),
-                (string) ($response['label'] ?? 'neutral'),
+                $score,
+                $label,
             ];
         } catch (\Throwable $e) {
             Log::warning('SentimentAnalysisJob: AI request failed', [

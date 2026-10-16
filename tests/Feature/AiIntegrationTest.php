@@ -21,10 +21,6 @@ use App\Models\User;
 use App\Services\ChatbotService;
 use App\Services\RecommendationService;
 use Carbon\Carbon;
-use GuzzleHttp\Client;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Psr7\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
@@ -481,21 +477,27 @@ class AiIntegrationTest extends TestCase
             'submitted_at'      => now(),
         ]);
 
-        // Mock the OpenAI response for sentiment analysis
-        $sentimentJson = json_encode(['score' => 0.9, 'label' => 'positive']);
-        $mock    = new MockHandler([
-            new Response(200, [], json_encode([
-                'choices' => [['message' => ['content' => $sentimentJson]]],
-            ])),
+        config([
+            'ai.default' => 'openai',
+            'ai.providers.openai.key' => 'test-key',
+            'ai.providers.openai.models.text.default' => 'gpt-4o-mini',
         ]);
-        $handler = HandlerStack::create($mock);
-        $client  = new Client(['handler' => $handler]);
 
-        $job = new SentimentAnalysisJob($feedback->id);
-        $job->withHttpClient($client);
+        $sentimentJson = json_encode(['score' => 0.9, 'label' => 'positive']);
+        \Illuminate\Support\Facades\Http::fake([
+            'api.openai.com/v1/responses' => \Illuminate\Support\Facades\Http::response([
+                'id' => 'resp_test',
+                'model' => 'gpt-4o-mini',
+                'output' => [[
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'content' => [['type' => 'output_text', 'text' => $sentimentJson]],
+                ]],
+            ]),
+        ]);
 
         $start = microtime(true);
-        $job->handle();
+        (new SentimentAnalysisJob($feedback->id))->handle();
         $elapsed = microtime(true) - $start;
 
         // Job must complete within 10 seconds (Requirement 10.2)

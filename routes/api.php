@@ -42,6 +42,7 @@ use App\Http\Controllers\RecommendationController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\ConflictController;
 use App\Http\Controllers\ContentGenerationController;
+use App\Http\Controllers\BookingPaymentController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/subscribe', [AuthController::class, 'subscribe']);
@@ -78,6 +79,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('discount', DiscountController::class);
     Route::apiResource('agent', AgentController::class);
     Route::apiResource('bank', BankController::class);
+    Route::get('/room/available', [RoomController::class, 'available']);
     Route::apiResource('room', RoomController::class);
     Route::apiResource('branch', BranchController::class);
     Route::apiResource('customer', CustomerController::class);
@@ -94,6 +96,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('cart', CartController::class);
     Route::post('/cart/session', [CartController::class, 'bookSession']);
     Route::post('/cart/voucher', [CartController::class, 'buyVoucher']);
+    Route::post('/booking-payments', [BookingPaymentController::class, 'create']);
+    Route::get('/booking-payments/{bookingPayment}', [BookingPaymentController::class, 'status']);
 
     // AI Features
     Route::post('/feedback', [FeedbackController::class, 'store']);
@@ -119,6 +123,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/ai/generate-description', [ContentGenerationController::class, 'generateDescription']);
     Route::post('/ai/generate-image', [ContentGenerationController::class, 'generateImage']);
 });
+
+Route::post('/webhooks/xendit/payment-session', [BookingPaymentController::class, 'webhook']);
 
 Route::get('/banner', [BannerController::class, 'index']);
 Route::get('/branch', [BranchController::class, 'index']);

@@ -6,7 +6,6 @@ use App\Services\AITranslationService;
 use App\Services\RecommendationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * RecommendationController
@@ -36,8 +35,14 @@ class RecommendationController extends Controller
     {
         $validated = $request->validate([
             'customer_id' => 'required|integer|exists:customers,id',
-            'branch_id'   => 'required|integer|exists:branches,id',
+            'branch_id'   => 'nullable|integer|exists:branches,id',
         ]);
+
+        abort_unless((int) $request->user()->customer?->id === (int) $validated['customer_id'], 403, 'Recommendations are only available for your customer account.');
+
+        // Before a customer chooses a branch we deliberately return no
+        // recommendations instead of generating an unscoped global list.
+        if (empty($validated['branch_id'])) return response()->json([]);
 
         $recommendations = $this->service->getRecommendations(
             (int) $validated['customer_id'],
@@ -66,6 +71,12 @@ class RecommendationController extends Controller
             'branch_id'   => 'required|integer|exists:branches,id',
         ]);
 
+        $user = $request->user();
+        abort_unless(in_array(strtoupper((string) $user->type), ['ADMIN', 'MANAGER', 'STAFF', 'CASHIER', 'THERAPIST'], true), 403);
+        if (strtoupper((string) $user->type) !== 'ADMIN') {
+            abort_unless((int) $user->employee?->branch_id === (int) $validated['branch_id'], 403, 'Recommendations are limited to your assigned branch.');
+        }
+
         $recommendations = $this->service->getRecommendations(
             (int) $validated['customer_id'],
             (int) $validated['branch_id'],
@@ -89,15 +100,8 @@ class RecommendationController extends Controller
      */
     public function invalidate(Request $request, int $customerId): JsonResponse
     {
-        $branchId = $request->input('branch_id');
-
-        // Clear the Redis cache key rec:{customerId}:{branchId}
-        if ($branchId !== null) {
-            Cache::forget("rec:{$customerId}:{$branchId}");
-        } else {
-            // Invalidate all known branch keys for this customer (best-effort)
-            $this->service->invalidateCache($customerId);
-        }
+        abort_unless((int) $request->user()->customer?->id === $customerId, 403, 'You may only invalidate your own recommendations.');
+        $this->service->invalidateCache($customerId);
 
         return response()->json(['message' => 'Cache invalidated.']);
     }

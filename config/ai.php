@@ -31,10 +31,10 @@ return [
             'key'    => env('OPENAI_API_KEY'),
             'models' => [
                 'text' => [
-                    'default' => env('AI_TEXT_MODEL', 'gpt-4o-mini'),
+                    'default' => env('OPENAI_TEXT_MODEL', 'gpt-4o-mini'),
                 ],
                 'image' => [
-                    'default' => env('AI_IMAGE_MODEL', 'gpt-image-1-mini')
+                    'default' => env('OPENAI_IMAGE_MODEL', 'gpt-image-1-mini')
                 ]
             ],
         ],
@@ -44,7 +44,7 @@ return [
             'url'    => env('OLLAMA_URL', 'http://localhost:11434'),
             'models' => [
                 'text' => [
-                    'default' => env('AI_TEXT_MODEL', 'gemma4:e2b'),
+                    'default' => env('OLLAMA_TEXT_MODEL', 'gemma4:e2b'),
                 ],
             ],
         ],
@@ -54,10 +54,10 @@ return [
             'key'    => env('GEMINI_API_KEY'),
             'models' => [
                 'text' => [
-                    'default' => env('AI_TEXT_MODEL', 'gemini-2.5-flash')
+                    'default' => env('GEMINI_TEXT_MODEL', 'gemini-2.5-flash')
                 ],
                 'image' => [
-                    'default' => env('AI_IMAGE_MODEL', 'gemini-2.5-flash-image')
+                    'default' => env('GEMINI_IMAGE_MODEL', 'gemini-2.5-flash-image')
                 ]
             ],
         ],
@@ -75,8 +75,8 @@ return [
     */
 
     'models' => [
-        'text'          => env('AI_TEXT_MODEL', 'gpt-4o-mini'),
-        'image'         => env('AI_IMAGE_MODEL', 'dall-e-3'),
+        'text'          => env('OPENAI_TEXT_MODEL', 'gpt-4o-mini'),
+        'image'         => env('OPENAI_IMAGE_MODEL', 'gpt-image-1-mini'),
         'embeddings'    => env('AI_EMBEDDINGS_MODEL', 'text-embedding-3-small'),
         'transcription' => env('AI_TRANSCRIPTION_MODEL', 'whisper-1'),
         'tts'           => env('AI_TTS_MODEL', 'tts-1'),

@@ -4,6 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\Employee;
 use App\Models\Branch;
+use App\Models\Attendance;
+use App\Models\Bed;
+use App\Models\Grade;
+use App\Models\Room;
+use App\Models\Session;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
@@ -72,5 +77,46 @@ class EmployeeControllerTest extends TestCase
              ->assertJson(['message' => 'Employee deleted successfully']);
 
         $this->assertDatabaseMissing('employees', ['id' => $employee->id]);
+    }
+
+    public function test_therapist_list_uses_branch_and_duration_aware_session_availability(): void
+    {
+        $branch = Branch::factory()->create();
+        $otherBranch = Branch::factory()->create();
+        $free = Employee::factory()->create(['branch_id' => $branch->id, 'status' => 'active']);
+        $busy = Employee::factory()->create(['branch_id' => $branch->id, 'status' => 'active']);
+        $other = Employee::factory()->create(['branch_id' => $otherBranch->id, 'status' => 'active']);
+        $date = now()->addDay()->toDateString();
+
+        foreach ([$free, $busy, $other] as $employee) {
+            Grade::factory()->create([
+                'employee_id' => $employee->id,
+                'grade' => 'A',
+                'start_date' => now()->subYear()->toDateString(),
+                'end_date' => null,
+            ]);
+            Attendance::factory()->create(['employee_id' => $employee->id, 'date' => $date]);
+        }
+
+        $room = Room::factory()->create(['branch_id' => $branch->id]);
+        $bed = Bed::factory()->create(['room_id' => $room->id]);
+        Session::create([
+            'bed_id' => $bed->id,
+            'customer_id' => \App\Models\Customer::factory()->create()->id,
+            'employee_id' => $busy->id,
+            'treatment_id' => \App\Models\Treatment::factory()->create()->id,
+            'date' => $date,
+            'start' => '10:00:00',
+            'end' => '11:00:00',
+            'status' => 'waiting',
+            'payment' => 'walk-in',
+        ]);
+
+        $this->getJson('/api/employee?show=therapist&branch_id=' . $branch->id . '&date=' . $date . '&time=10:30&duration=60')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.id', $free->id)
+            ->assertJsonMissing(['id' => $busy->id])
+            ->assertJsonMissing(['id' => $other->id]);
     }
 }

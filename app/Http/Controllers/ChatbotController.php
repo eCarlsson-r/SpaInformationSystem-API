@@ -35,8 +35,7 @@ class ChatbotController extends Controller
     public function customer(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'message'    => 'required|string|max:2000',
-            'session_id' => 'nullable|string',
+            'message' => 'required|string|max:2000',
         ]);
 
         $user = $request->user();
@@ -72,17 +71,23 @@ class ChatbotController extends Controller
      */
     public function staff(Request $request): JsonResponse
     {
-
         $validated = $request->validate([
             'query' => 'required|string|max:2000',
         ]);
 
         $user     = $request->user();
         $employee = $user->employee;
+        $role = strtoupper((string) $user->type);
+        $allowedRoles = ['ADMIN', 'MANAGER', 'STAFF', 'CASHIER', 'THERAPIST'];
+
+        if (!in_array($role, $allowedRoles, true) || ($role !== 'ADMIN' && !$employee?->branch_id)) {
+            return response()->json(['type' => 'authorization_error', 'message' => 'Staff access is required.'], 403);
+        }
 
         $staffContext = [
-            'role'      => strtolower($user->type ?? 'staff'),
-            'branch_id' => $employee?->branch_id,
+            'role'      => strtolower($role),
+            // Only administrators may intentionally receive all-branch aggregates.
+            'branch_id' => $role === 'ADMIN' ? null : (int) $employee->branch_id,
         ];
 
         $response = $this->service->processStaffQuery($validated['query'], $staffContext);

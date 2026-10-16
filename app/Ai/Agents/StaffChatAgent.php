@@ -30,16 +30,13 @@ class StaffChatAgent implements Agent, HasStructuredOutput
     public function instructions(): string
     {
         return <<<PROMPT
-You are a spa operations assistant for staff. Classify the query intent and return
-a structured response. Always populate ALL fields — use "" for fields that do not apply.
+Classify a staff query for a spa operations dashboard. Do not calculate, invent,
+or format business metrics. Always populate ALL fields — use "" for fields that do not apply.
 
 For valid queries:
 - Set type to "data_response"
 - Set intent to one of: revenue_query, booking_query, staff_query, session_query
-- Set value to the relevant data value as a string
-- Set period to the time period referenced (e.g. "today", "this week", "last 30 days")
-- Set branch to the branch name or ID referenced, or "" if not applicable
-- Set formattedAnswer to a concise, human-readable answer
+- Set value, period, branch, and formattedAnswer to "". The application computes these from authorized data.
 
 If the query is outside the staff member's authorization scope:
 - Set type to "authorization_error"
@@ -60,7 +57,9 @@ PROMPT;
                 ->enum(['data_response', 'authorization_error', 'error'])
                 ->required(),
 
-            'intent'          => $schema->string()->required(),
+            'intent'          => $schema->string()
+                ->enum(['revenue_query', 'booking_query', 'staff_query', 'session_query', ''])
+                ->required(),
             'value'           => $schema->string()->required(),
             'period'          => $schema->string()->required(),
             'branch'          => $schema->string()->required(),

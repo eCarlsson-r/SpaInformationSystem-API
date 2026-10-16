@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Room;
 use App\Models\Bed;
+use App\Models\BookingPayment;
+use App\Models\Session;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class RoomController extends Controller
@@ -13,28 +16,58 @@ class RoomController extends Controller
      */
     public function index(Request $request)
     {
-        $rooms = Room::with(['branch', 'bed.session' => function ($query) {
-            $query->where('status', 'ongoing');
-        }])->get();
+        $request->validate([
+            'branch_id' => 'sometimes|integer|exists:branches,id',
+            'date' => 'sometimes|date',
+            'time' => 'sometimes|date_format:H:i',
+            'duration' => 'sometimes|integer|min:1|max:1440',
+        ]);
+        $rooms = Room::with(['branch', 'bed'])
+            ->when($request->filled('branch_id'), fn ($query) => $query->where('branch_id', $request->input('branch_id')))
+            ->get();
 
-        if ($request->has('show') && $request->show == 'empty') {
-            return $rooms->map(function ($room) {
-                $empty_beds = $room->bed->filter(function ($bed) {
-                    // Ensure 'session' is not a collection. 
-                    // If a bed can have many sessions, use $bed->session->isEmpty()
-                    return $bed->session === null;
-                });
+        if ($request->input('show') === 'empty') {
+            $date = $request->input('date');
+            $time = $request->input('time');
+            $duration = (int) $request->input('duration', 60);
 
-                // Use setRelation to properly override the loaded beds
-                $room->setRelation('bed', $empty_beds->values()); 
+            if ($date && $time) {
+                $start = Carbon::createFromFormat('Y-m-d H:i', "{$date} {$time}");
+                $end = $start->copy()->addMinutes($duration);
+                $sessionStatuses = ['waiting', 'ongoing'];
+                $busyBedIds = Session::query()
+                    ->whereDate('date', $start->toDateString())
+                    ->whereIn('status', $sessionStatuses)
+                    ->where('start', '<', $end->format('H:i:s'))
+                    ->where('end', '>', $start->format('H:i:s'))
+                    ->pluck('bed_id')
+                    ->all();
+                $heldBedIds = BookingPayment::query()
+                    ->whereDate('session_date', $start->toDateString())
+                    ->whereIn('status', ['creating', 'pending'])
+                    ->where('expires_at', '>', now())
+                    ->where('session_start', '<', $end->format('H:i:s'))
+                    ->where('session_end', '>', $start->format('H:i:s'))
+                    ->pluck('bed_id')
+                    ->all();
+                $unavailableBedIds = array_unique([...$busyBedIds, ...$heldBedIds]);
+            } else {
+                $unavailableBedIds = Session::query()
+                    ->where('status', 'ongoing')
+                    ->pluck('bed_id')
+                    ->all();
+            }
+
+            return $rooms->map(function ($room) use ($unavailableBedIds) {
+                $availableBeds = $room->bed->reject(fn ($bed) => in_array($bed->id, $unavailableBedIds));
+                $room->setRelation('bed', $availableBeds->values());
 
                 return $room;
-            });
+            })->filter(fn ($room) => $room->bed->isNotEmpty())->values();
         } else {
-            return $rooms->map(function ($room) {
-                $occupied_beds = $room->bed->filter(function ($bed) {
-                    return $bed->session;
-                })->count();
+            $ongoingBedIds = Session::query()->where('status', 'ongoing')->pluck('bed_id');
+            return $rooms->map(function ($room) use ($ongoingBedIds) {
+                $occupied_beds = $room->bed->whereIn('id', $ongoingBedIds)->count();
 
                 $room->occupied = $occupied_beds;
                 $room->empty = $room->bed->count() - $occupied_beds;
@@ -42,6 +75,12 @@ class RoomController extends Controller
                 return $room;
             });
         }
+    }
+
+    public function available(Request $request)
+    {
+        $request->merge(['show' => 'empty']);
+        return $this->index($request);
     }
 
     /**

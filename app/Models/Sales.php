@@ -52,4 +52,9 @@ class Sales extends Model
     {
         return $this->hasMany(SalesRecord::class);
     }
+
+    public function sessions()
+    {
+        return $this->hasMany(Session::class, 'sales_id');
+    }
 }

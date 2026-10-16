@@ -12,12 +12,9 @@ use App\Models\Room;
 use App\Models\Session;
 use App\Models\Treatment;
 use Carbon\Carbon;
-use GuzzleHttp\Client;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Psr7\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -72,25 +69,29 @@ class SentimentAnalysisJobPropertyTest extends TestCase
     }
 
     /**
-     * Build a Guzzle mock client that returns the given score and label as an
-     * OpenAI-style chat completion response.
-     *
-     * @param  float   $score  Sentiment score to return from the mock AI
-     * @param  string  $label  Sentiment label to return from the mock AI
-     * @param  int     $times  Number of responses to queue (default 1)
+     * Fake the Laravel AI SDK's OpenAI Responses API output.
      */
-    private function makeMockClient(float $score, string $label, int $times = 1): Client
+    private function fakeSentimentResponse(float $score, string $label): void
     {
-        $content  = json_encode(['score' => $score, 'label' => $label]);
-        $body     = json_encode([
-            'choices' => [['message' => ['content' => $content]]],
+        config([
+            'ai.default' => 'openai',
+            'ai.providers.openai.key' => 'test-key',
+            'ai.providers.openai.models.text.default' => 'gpt-4o-mini',
         ]);
-
-        $responses = array_fill(0, $times, new Response(200, [], $body));
-        $mock      = new MockHandler($responses);
-        $handler   = HandlerStack::create($mock);
-
-        return new Client(['handler' => $handler]);
+        Http::fake([
+            'api.openai.com/v1/responses' => Http::response([
+                'id' => 'resp_test',
+                'model' => 'gpt-4o-mini',
+                'output' => [[
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'content' => [[
+                        'type' => 'output_text',
+                        'text' => json_encode(['score' => $score, 'label' => $label]),
+                    ]],
+                ]],
+            ]),
+        ]);
     }
 
     // =========================================================================
@@ -182,14 +183,9 @@ class SentimentAnalysisJobPropertyTest extends TestCase
     ): void {
         // Feature: spa-ai-features, Property 24: Sentiment output validity
         Event::fake();
-        config(['services.openai.api_key' => 'test-key']);
-
         $feedback = $this->createFeedback($comment);
-
-        $job    = new SentimentAnalysisJob($feedback->id);
-        $client = $this->makeMockClient($rawScore, $rawLabel);
-        $job->withHttpClient($client);
-        $job->handle();
+        $this->fakeSentimentResponse($rawScore, $rawLabel);
+        (new SentimentAnalysisJob($feedback->id))->handle();
 
         $feedback->refresh();
 

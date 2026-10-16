@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Models\BookingPayment;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class EmployeeController extends Controller
@@ -10,31 +12,54 @@ class EmployeeController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $query = Employee::query();
 
-        $query->when(request()->has('id'), function ($query) {
-            return $query->where('id', request('id'));
+        $query->when($request->has('id'), function ($query) use ($request) {
+            return $query->where('id', $request->input('id'));
         });
 
-        $query->when(request()->has('branch_id'), function ($query) {
-            return $query->where('branch_id', request('branch_id'));
+        $query->when($request->has('branch_id'), function ($query) use ($request) {
+            return $query->where('branch_id', $request->input('branch_id'));
         });
 
-        $query->when(request()->has('active_only'), function ($query) {
-            return $query->where('status', 'fixed');
+        $query->when($request->has('active_only'), function ($query) {
+            return $query->where('status', 'active');
         });
 
-        $query->when(request()->has('show') && request()->input('show') == "therapist", function ($query) {
-            return $query->leftJoin('grades', 'employees.id', '=', 'grades.employee_id')
-                ->leftJoin('attendance', 'employees.id', '=', 'attendance.employee_id')
-                ->whereDoesntHave('session', function ($query) {
-                    return $query->where('date', '=', request('date'))->where('start', '<=', request('time'))->where('end_time', '>=', request('time'));
-                })
-                ->where('grades.grade', '!=', 'K')
-                ->where('attendance.date', '=', request('date'));
-        });
+        if ($request->input('show') === 'therapist') {
+            $data = $request->validate([
+                'branch_id' => 'required|integer|exists:branches,id',
+                'date' => 'required|date',
+                'time' => 'required|date_format:H:i',
+                'duration' => 'sometimes|integer|min:1|max:1440',
+            ]);
+            $start = Carbon::createFromFormat('Y-m-d H:i', Carbon::parse($data['date'])->toDateString() . ' ' . $data['time']);
+            $end = $start->copy()->addMinutes((int) ($data['duration'] ?? 60));
+            $date = $start->toDateString();
+
+            $query->where('status', 'active')
+                ->whereHas('grade', fn ($grades) => $grades
+                    ->where('grade', '!=', 'K')
+                    ->where('start_date', '<=', $date)
+                    ->where(fn ($ends) => $ends->whereNull('end_date')->orWhere('end_date', '>=', $date)))
+                ->whereHas('attendance', fn ($attendance) => $attendance->whereDate('date', $date))
+                ->whereDoesntHave('sessions', fn ($sessions) => $sessions
+                    ->whereDate('date', $date)
+                    ->whereIn('status', ['waiting', 'ongoing'])
+                    ->where('start', '<', $end->format('H:i:s'))
+                    ->where('end', '>', $start->format('H:i:s')));
+
+            $heldEmployeeIds = BookingPayment::query()
+                ->whereDate('session_date', $date)
+                ->whereIn('status', ['creating', 'pending'])
+                ->where('expires_at', '>', now())
+                ->where('session_start', '<', $end->format('H:i:s'))
+                ->where('session_end', '>', $start->format('H:i:s'))
+                ->pluck('employee_id');
+            $query->whereNotIn('id', $heldEmployeeIds)->select(['id', 'name', 'branch_id']);
+        }
 
         return $query->get();
     }

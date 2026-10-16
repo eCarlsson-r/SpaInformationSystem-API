@@ -13,10 +13,6 @@ use App\Models\Room;
 use App\Models\Session;
 use App\Models\Treatment;
 use Carbon\Carbon;
-use GuzzleHttp\Client;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Psr7\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
@@ -71,20 +67,27 @@ class SentimentAnalysisJobTest extends TestCase
         ]);
     }
 
-    /**
-     * Build a Guzzle mock client that returns the given score and label.
-     */
-    private function makeMockClient(float $score, string $label): Client
+    private function fakeSentimentResponse(float $score, string $label): void
     {
-        $content = json_encode(['score' => $score, 'label' => $label]);
-        $body    = json_encode([
-            'choices' => [['message' => ['content' => $content]]],
+        config([
+            'ai.default' => 'openai',
+            'ai.providers.openai.key' => 'test-key',
+            'ai.providers.openai.models.text.default' => 'gpt-4o-mini',
         ]);
-
-        $mock    = new MockHandler([new Response(200, [], $body)]);
-        $handler = HandlerStack::create($mock);
-
-        return new Client(['handler' => $handler]);
+        Http::fake([
+            'api.openai.com/v1/responses' => Http::response([
+                'id' => 'resp_test',
+                'model' => 'gpt-4o-mini',
+                'output' => [[
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'content' => [[
+                        'type' => 'output_text',
+                        'text' => json_encode(['score' => $score, 'label' => $label]),
+                    ]],
+                ]],
+            ]),
+        ]);
     }
 
     /**
@@ -130,28 +133,15 @@ class SentimentAnalysisJobTest extends TestCase
     public function test_empty_comment_sets_neutral_score_without_ai_call(): void
     {
         Event::fake();
-        config(['services.openai.api_key' => 'test-key']);
+        Http::fake();
 
         $feedback = $this->createFeedback('');
 
-        // Inject a client whose handler throws immediately if any request is made.
-        // If the job incorrectly calls the AI for an empty comment, the test will fail.
-        $httpCallMade = false;
-        $throwingMock = new MockHandler([
-            function () use (&$httpCallMade) {
-                $httpCallMade = true;
-                throw new \RuntimeException('Unexpected HTTP call for empty comment');
-            },
-        ]);
-        $throwingClient = new Client(['handler' => HandlerStack::create($throwingMock)]);
-
-        $job = new SentimentAnalysisJob($feedback->id);
-        $job->withHttpClient($throwingClient);
-        $job->handle();
+        (new SentimentAnalysisJob($feedback->id))->handle();
 
         $feedback->refresh();
 
-        $this->assertFalse($httpCallMade, 'No HTTP call should be made for empty comments');
+        Http::assertNothingSent();
         $this->assertEquals(0.0, $feedback->sentiment_score, 'Empty comment must set sentiment_score to 0.0');
         $this->assertEquals('neutral', $feedback->sentiment_label, 'Empty comment must set sentiment_label to neutral');
         $this->assertEquals('completed', $feedback->analysis_status, 'Empty comment must set analysis_status to completed');
@@ -166,7 +156,7 @@ class SentimentAnalysisJobTest extends TestCase
     public function test_whitespace_only_comment_treated_as_empty(): void
     {
         Event::fake();
-        config(['services.openai.api_key' => 'test-key']);
+        Http::fake();
 
         foreach (['   ', "\t", "\n", "  \n  "] as $whitespace) {
             $feedback = $this->createFeedback($whitespace);
@@ -262,14 +252,11 @@ class SentimentAnalysisJobTest extends TestCase
     public function test_feedback_analyzed_event_broadcast_after_successful_analysis(): void
     {
         Event::fake();
-        config(['services.openai.api_key' => 'test-key']);
+        $this->fakeSentimentResponse(0.85, 'positive');
 
         $feedback = $this->createFeedback('The massage was absolutely wonderful!');
 
-        $job    = new SentimentAnalysisJob($feedback->id);
-        $client = $this->makeMockClient(0.85, 'positive');
-        $job->withHttpClient($client);
-        $job->handle();
+        (new SentimentAnalysisJob($feedback->id))->handle();
 
         // FeedbackAnalyzed must have been broadcast
         Event::assertDispatched(FeedbackAnalyzed::class, function (FeedbackAnalyzed $event) use ($feedback) {
@@ -305,14 +292,11 @@ class SentimentAnalysisJobTest extends TestCase
     public function test_feedback_analyzed_event_payload_contains_correct_data(): void
     {
         Event::fake();
-        config(['services.openai.api_key' => 'test-key']);
+        $this->fakeSentimentResponse(0.9, 'positive');
 
         $feedback = $this->createFeedback('Excellent service, highly recommend!');
 
-        $job    = new SentimentAnalysisJob($feedback->id);
-        $client = $this->makeMockClient(0.9, 'positive');
-        $job->withHttpClient($client);
-        $job->handle();
+        (new SentimentAnalysisJob($feedback->id))->handle();
 
         $feedback->refresh();
 
