@@ -2,6 +2,7 @@
 .env.*
 .git
 .github
+bootstrap/cache/*.php
 node_modules
 vendor
 storage/logs/*

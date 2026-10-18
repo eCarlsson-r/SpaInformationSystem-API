@@ -4,11 +4,24 @@ This is a containerized demo path for Cloud Run. It does not deploy automaticall
 
 ## API
 
-Build and publish from this directory:
+Create the Artifact Registry Docker repository once before the first build. `REPOSITORY` is the registry repository resource, and it must already exist in the same project and region used by the image URL:
 
 ```sh
-gcloud builds submit --tag REGION-docker.pkg.dev/PROJECT/REPOSITORY/spa-api:TAG
+gcloud artifacts repositories create spa-api \
+  --repository-format=docker \
+  --location=asia-southeast2 \
+  --project=spasystem
 ```
+
+Then build and publish from this directory. The image URL has three path parts after the registry host: project, repository, and image name. In particular, include `/api` after the `spa-api` repository:
+
+```sh
+gcloud builds submit \
+  --project=spasystem \
+  --tag=asia-southeast2-docker.pkg.dev/spasystem/spa-api/api:TAG
+```
+
+Use a unique value for `TAG` for each build. If the repository already exists, skip the create command; if it exists in another region, use that region consistently in both commands and the image host.
 
 Create a Cloud Run service with port 8080, a dedicated service account, Cloud SQL attachment, and these non-secret settings:
 
@@ -34,7 +47,7 @@ Run migrations as a one-off Cloud Run Job using the same image, service account,
 gcloud run jobs create spa-api-migrate \
   --image=REGION-docker.pkg.dev/PROJECT/REPOSITORY/spa-api:TAG \
   --region=REGION \
-  --add-cloudsql-instances=PROJECT:REGION:INSTANCE \
+  --set-cloudsql-instances=PROJECT:REGION:INSTANCE \
   --command=php --args=artisan,migrate,--force
 gcloud run jobs execute spa-api-migrate --region=REGION --wait
 ```
@@ -65,10 +78,15 @@ Deploy the image to Cloud Run on port 8080, then set `STORE_URL` on the API to t
 
 ## SpaCashier
 
-Build the standalone Next.js image with the public API URL as a build argument:
+Build the standalone Next.js image with the public API URL and Reverb connection settings as build arguments. `NEXT_PUBLIC_*` values are embedded in the browser bundle, so provide them at image build time. The Reverb key and host must match the API's Reverb configuration; these values are public client configuration, not secrets:
 
 ```sh
-docker build --build-arg NEXT_PUBLIC_API_URL=https://API_HOST/api \
+docker build \
+  --build-arg NEXT_PUBLIC_API_URL=https://API_HOST/api \
+  --build-arg NEXT_PUBLIC_REVERB_APP_KEY=REVERB_APP_KEY \
+  --build-arg NEXT_PUBLIC_REVERB_HOST=REVERB_HOST \
+  --build-arg NEXT_PUBLIC_REVERB_PORT=443 \
+  --build-arg NEXT_PUBLIC_REVERB_SCHEME=https \
   -t REGION-docker.pkg.dev/PROJECT/REPOSITORY/spa-cashier:TAG .
 docker push REGION-docker.pkg.dev/PROJECT/REPOSITORY/spa-cashier:TAG
 ```

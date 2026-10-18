@@ -12,7 +12,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
             $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('cart_record_id')->nullable()->constrained('cart_records')->nullOnDelete();
+            $table->unsignedInteger('cart_record_id')->nullable();
+            $table->foreign('cart_record_id')->references('id')->on('cart_records')->nullOnDelete();
             $table->foreignId('treatment_id')->constrained()->cascadeOnDelete();
             $table->foreignId('employee_id')->constrained()->cascadeOnDelete();
             $table->foreignId('room_id')->constrained()->cascadeOnDelete();
@@ -30,8 +31,8 @@ return new class extends Migration
             $table->foreignId('sales_id')->nullable()->constrained('sales')->nullOnDelete();
             $table->foreignId('session_id')->nullable()->constrained('sessions')->nullOnDelete();
             $table->timestamps();
-            $table->index(['bed_id', 'session_date', 'status', 'expires_at']);
-            $table->index(['employee_id', 'session_date', 'status', 'expires_at']);
+            $table->index(['bed_id', 'session_date', 'status', 'expires_at'], 'booking_payments_bed_slot_idx');
+            $table->index(['employee_id', 'session_date', 'status', 'expires_at'], 'booking_payments_employee_slot_idx');
         });
 
         Schema::table('sessions', function (Blueprint $table) {

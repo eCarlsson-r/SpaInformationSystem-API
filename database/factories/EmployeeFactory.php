@@ -17,7 +17,7 @@ class EmployeeFactory extends Factory
             'name' => $this->faker->firstName,
             'status' => 'active',
             'identity_type' => 'KTP',
-            'identity_number' => $this->faker->nik,
+            'identity_number' => $this->faker->numerify('################'),
             'place_of_birth' => $this->faker->city,
             'date_of_birth' => $this->faker->date(),
             'certified' => 1,

@@ -9,7 +9,8 @@ WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --no-scripts
 COPY . .
-RUN composer dump-autoload --no-dev --optimize --no-interaction --no-scripts \
+RUN rm -f bootstrap/cache/*.php \
+    && composer dump-autoload --no-dev --optimize --no-interaction --no-scripts \
     && php artisan package:discover --ansi
 
 FROM php:8.4-apache
