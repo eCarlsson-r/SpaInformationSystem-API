@@ -95,4 +95,6 @@ Deploy that image to Cloud Run on port 8080 and set `POS_URL` on the API to the 
 
 ## Demo Gate
 
-Use a non-production Cloud SQL database and Xendit sandbox credentials. Verify booking hold creation, callback-token and amount checks, webhook replay idempotency, sale/session creation, and staff start/finish actions before showing the demo. Never use a frontend success redirect as payment confirmation; the API webhook is authoritative.
+Use a non-production Cloud SQL database and Xendit sandbox credentials. After running `php artisan migrate --force`, run `php artisan db:seed --force` once to create demo data, including employee grades and morning/afternoon shifts for the booking app's next 14 days. The seeded customer login is `alice@example.com` / `password`; the seeded cashier login is `demo_staff` / `password`. The waiting session created for the cashier walkthrough is a walk-in demo fixture, not a paid online booking.
+
+Verify booking hold creation, callback-token and amount checks, webhook replay idempotency, sale/session creation, and staff start/finish actions before showing the demo. Never seed a booking payment as paid or use a frontend success redirect as payment confirmation; the Xendit webhook is authoritative. Show Gemini only after a live AI request succeeds.

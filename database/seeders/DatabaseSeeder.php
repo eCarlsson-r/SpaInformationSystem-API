@@ -119,6 +119,7 @@ class DatabaseSeeder extends Seeder
 
         // 12. OPERATIONAL (Sessions/Bookings)
         $this->seedSessions($grandSpa, $customers, $categories, $staff['therapists']);
+        $this->seedDemoSession($grandSpa, $demoCustomer, $treatments->first(), $staff['therapists'][0]);
 
         // 13. OPERATIONAL (Sales & Vouchers)
         $this->seedSales($grandSpa, $demoCustomer, $categories, $staff['therapists'], $accounts);
@@ -192,12 +193,14 @@ class DatabaseSeeder extends Seeder
         $types = ['STAFF', 'THERAPIST', 'MANAGER'];
         $results = ['staff' => [], 'therapists' => []];
 
-        foreach ([$branch1, $branch2] as $branch) {
+        foreach ([$branch1, $branch2] as $branchIndex => $branch) {
             foreach ($types as $type) {
                 $count = ($type === 'THERAPIST') ? 4 : 1;
                 for ($i = 0; $i < $count; $i++) {
                     $user = User::factory()->create([
-                        'username' => strtolower($type) . "_" . $branch->id . "_" . $i,
+                        'username' => $type === 'STAFF' && $branchIndex === 0
+                            ? 'demo_staff'
+                            : strtolower($type) . "_" . $branch->id . "_" . $i,
                         'type' => $type
                     ]);
                     $emp = Employee::factory()->create([
@@ -205,12 +208,37 @@ class DatabaseSeeder extends Seeder
                         'branch_id' => $branch->id,
                         'gender' => ($i % 2 === 0) ? 'M' : 'F'
                     ]);
+                    $emp->grade()->create([
+                        'grade' => $type === 'THERAPIST' ? 'A' : 'K',
+                        'start_date' => Carbon::today()->toDateString(),
+                    ]);
                     if ($type === 'THERAPIST') $results['therapists'][] = $emp;
                     else $results['staff'][] = $emp;
                 }
             }
         }
         return $results;
+    }
+
+    private function seedDemoSession($branch, $customer, $treatment, $therapist): void
+    {
+        $bed = Bed::whereHas('room', fn ($query) => $query->where('branch_id', $branch->id))
+            ->orderBy('id')
+            ->firstOrFail();
+        $start = Carbon::now()->addDays(2)->startOfDay()->addHours(10);
+
+        Session::create([
+            'order_time' => Carbon::now()->format('H:i:s'),
+            'bed_id' => $bed->id,
+            'customer_id' => $customer->id,
+            'payment' => 'walk-in',
+            'date' => $start->toDateString(),
+            'start' => $start->format('H:i:s'),
+            'end' => $start->copy()->addMinutes((int) $treatment->duration)->format('H:i:s'),
+            'status' => 'waiting',
+            'treatment_id' => $treatment->id,
+            'employee_id' => $therapist->id,
+        ]);
     }
 
     private function seedBanners()
@@ -251,6 +279,23 @@ class DatabaseSeeder extends Seeder
                     'clock_in' => '09:00:00',
                     'clock_out' => '17:00:00',
                     'shift_id' => 'M'
+                ]);
+            }
+        }
+
+        for ($day = 1; $day < 14; $day++) {
+            $date = Carbon::today()->addDays($day);
+            foreach ($allEmps as $index => $emp) {
+                $shiftId = ($day + $index) % 2 === 0 ? 'M' : 'A';
+                $shiftStart = $shiftId === 'M' ? '09:00:00' : '13:00:00';
+                $shiftEnd = $shiftId === 'M' ? '17:00:00' : '21:00:00';
+
+                Attendance::create([
+                    'employee_id' => $emp->id,
+                    'date' => $date->toDateString(),
+                    'shift_id' => $shiftId,
+                    'clock_in' => $shiftStart,
+                    'clock_out' => $shiftEnd,
                 ]);
             }
         }
