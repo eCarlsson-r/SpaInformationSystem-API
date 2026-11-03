@@ -160,11 +160,10 @@ class DashboardController extends Controller
                 ->groupBy('treatments.name')
                 ->orderByRaw('COUNT(*) DESC')
                 ->value('treatments.name'),
-            "hot_therapist" => Session::join('treatments', 'sessions.treatment_id', '=', 'treatments.id')
-                ->join('employees', 'sessions.employee_id', '=', 'employees.id')
+            "hot_therapist" => Session::join('employees', 'sessions.employee_id', '=', 'employees.id')
                 ->whereMonth('date', date('m', strtotime($date)))
                 ->whereYear('date', date('Y', strtotime($date)))
-                ->groupBy('employee_id')
+                ->groupBy('employee_id', 'employees.complete_name')
                 ->orderByRaw('COUNT(*) DESC')
                 ->value('employees.complete_name'),
             "voucher_sold" => 0,
@@ -227,9 +226,9 @@ class DashboardController extends Controller
             "hot_therapist" => $branch->employee()->join('sessions', 'employees.id', '=', 'sessions.employee_id')
                 ->whereMonth('date', date('m', strtotime($date)))
                 ->whereYear('date', date('Y', strtotime($date)))
-                ->groupBy('employee_id')
+                ->groupBy('employees.id', 'employees.complete_name')
                 ->orderByRaw('COUNT(*) DESC')
-                ->value('complete_name'),
+                ->value('employees.complete_name'),
             "voucher_sold" => 0,
             "voucher_improve" => 0,
             "monthly_income" => $branch->sales()
